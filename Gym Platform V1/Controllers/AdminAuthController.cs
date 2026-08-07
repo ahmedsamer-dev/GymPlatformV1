@@ -12,7 +12,7 @@ namespace Gym_Platform_V1.Controllers
     [Route("api/admin")]
     public class AdminAuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
+        private readonly IAdminAuthService _authService;
         private readonly ILogger<AdminAuthController> _logger;
 
         /// <summary>
@@ -20,7 +20,7 @@ namespace Gym_Platform_V1.Controllers
         /// </summary>
         /// <param name="authService">The authentication service</param>
         /// <param name="logger">The logger</param>
-        public AdminAuthController(IAuthService authService, ILogger<AdminAuthController> logger)
+        public AdminAuthController(IAdminAuthService authService, ILogger<AdminAuthController> logger)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -42,16 +42,6 @@ namespace Gym_Platform_V1.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<AdminLoginResponseDto>> Login([FromBody] AdminLoginRequestDto request)
         {
-            // Validate request model
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("Invalid login request model");
-                return BadRequest(new AdminLoginResponseDto
-                {
-                    Success = false,
-                    Message = "Invalid request model"
-                });
-            }
 
             try
             {

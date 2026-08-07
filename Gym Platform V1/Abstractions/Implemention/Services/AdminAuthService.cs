@@ -9,13 +9,13 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
     /// Authentication service implementation for Admin login.
     /// Responsibility: Authenticate Admin users and delegate token generation to ITokenService.
     /// </summary>
-    public class AuthService : IAuthService
+    public class AdminAuthService : IAdminAuthService
     {
         private readonly GymPlatformDbContext _dbContext;
         private readonly ITokenService _tokenService;
-        private readonly ILogger<AuthService> _logger;
+        private readonly ILogger<AdminAuthService> _logger;
 
-        public AuthService(GymPlatformDbContext dbContext, ITokenService tokenService, ILogger<AuthService> logger)
+        public AdminAuthService(GymPlatformDbContext dbContext, ITokenService tokenService, ILogger<AdminAuthService> logger)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));

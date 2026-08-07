@@ -6,7 +6,7 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
     /// Authentication service interface for Admin login.
     /// Responsibility: Authenticate Admin users and return login responses.
     /// </summary>
-    public interface IAuthService
+    public interface IAdminAuthService
     {
         /// <summary>
         /// Authenticates an Admin user by username and password.

@@ -57,7 +57,8 @@ builder.Services.AddAuthorization();
 // DEPENDENCY INJECTION
 // ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+builder.Services.AddScoped<IGymOwnerService, GymOwnerService>();
 
 // ============================================
 // API CONFIGURATION
