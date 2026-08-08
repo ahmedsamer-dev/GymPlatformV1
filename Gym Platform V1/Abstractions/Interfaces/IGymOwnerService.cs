@@ -58,6 +58,7 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
         /// Task containing GymOwnerResponseDto if found,
         /// or null if GymOwner does not exist or id is invalid
         /// </returns>
-        Task<GymOwnerResponseDto?> GetByIdAsync(int id);
+        Task<GymOwnerDetailsDto?> GetByIdAsync(int id);
+        Task<IEnumerable<GymOwnerResponseDto>> GetAllAsync();
     }
 }

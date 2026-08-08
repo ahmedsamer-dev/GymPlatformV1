@@ -137,19 +137,73 @@ namespace Gym_Platform_V1.Controllers
         }
 
         /// <summary>
-        /// Retrieves a GymOwner by their unique identifier.
+        /// Retrieves all GymOwners.
         /// 
         /// Authorization: Only Admin users can retrieve gym owners
+        /// 
+        /// Business Rules:
+        /// - Returns summary list of all GymOwners
+        /// - Does not load Gym entities or details
+        /// - Returns empty array if no GymOwners exist (200 OK, not 404)
+        /// - This is a read-only operation (no database modification)
+        /// </summary>
+        /// <returns>
+        /// 200 OK: List of GymOwnerResponseDto (may be empty array)
+        /// 401 Unauthorized: JWT missing, invalid, or expired
+        /// 403 Forbidden: Authenticated but not Admin
+        /// 500 Internal Server Error: Unexpected server error
+        /// </returns>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<GymOwnerResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<GymOwnerResponseDto>>> GetAll()
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving all GymOwners");
+
+                // ============================================
+                // CALL SERVICE
+                // ============================================
+                var response = await _gymOwnerService.GetAllAsync();
+
+                _logger.LogInformation("Retrieved {Count} GymOwners total", (response as List<GymOwnerResponseDto>)?.Count ?? 0);
+
+                // ============================================
+                // RETURN RESPONSE (200 OK)
+                // ============================================
+                // Return 200 OK with list (even if empty)
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                // Unexpected exception
+                _logger.LogError(ex, "Unexpected error retrieving all GymOwners");
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "An unexpected error occurred",
+                    traceId = HttpContext.TraceIdentifier
+                });
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a GymOwner by their unique identifier with all related Gyms.
+        /// 
+        /// Authorization: Only Admin users can retrieve gym owner details
         /// 
         /// Business Rules:
         /// - Id must be greater than 0
         /// - Returns BadRequest if id is invalid (id <= 0)
         /// - Returns NotFound if GymOwner does not exist
+        /// - Includes all Gyms owned by this GymOwner
         /// - This is a read-only operation (no database modification)
         /// </summary>
         /// <param name="id">The unique identifier of the GymOwner to retrieve</param>
         /// <returns>
-        /// 200 OK: GymOwner found with response DTO
+        /// 200 OK: GymOwner found with response DTO and all related Gyms
         /// 400 Bad Request: Id is invalid (id <= 0)
         /// 401 Unauthorized: JWT missing, invalid, or expired
         /// 403 Forbidden: Authenticated but not Admin
@@ -157,17 +211,30 @@ namespace Gym_Platform_V1.Controllers
         /// 500 Internal Server Error: Unexpected server error
         /// </returns>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(GymOwnerResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(GymOwnerDetailsDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<GymOwnerResponseDto>> GetById(int id)
+        public async Task<ActionResult<GymOwnerDetailsDto>> GetById(int id)
         {
 
-            try { 
+            try 
+            { 
                 _logger.LogInformation("Retrieving GymOwner with ID: {GymOwnerId}", id);
+
+                // ============================================
+                // STEP 1: VALIDATE ID
+                // ============================================
+                if (id <= 0)
+                {
+                    _logger.LogWarning("Invalid GymOwner ID provided: {GymOwnerId}", id);
+                    return BadRequest(new
+                    {
+                        message = "GymOwner ID must be greater than 0"
+                    });
+                }
 
                 // ============================================
                 // STEP 2: CALL SERVICE
@@ -186,7 +253,7 @@ namespace Gym_Platform_V1.Controllers
                     });
                 }
 
-                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}", id);
+                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}, Gyms Count: {GymsCount}", id, response.Gyms.Count);
                 return Ok(response);
             }
             catch (Exception ex)

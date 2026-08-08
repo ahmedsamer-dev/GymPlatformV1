@@ -161,12 +161,62 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         }
 
         /// <summary>
-        /// Retrieves a GymOwner by their unique identifier.
+        /// Retrieves all GymOwners in the system.
         /// Read-only operation using AsNoTracking for performance.
+        /// Returns only GymOwner summary information (no Gym entities).
+        /// </summary>
+        /// <returns>Enumerable collection of GymOwnerResponseDto, empty list if no GymOwners exist</returns>
+        public async Task<IEnumerable<GymOwnerResponseDto>> GetAllAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving all GymOwners");
+
+                // ============================================
+                // RETRIEVE FROM DATABASE (READ-ONLY)
+                // ============================================
+                // Use AsNoTracking() because this is a read-only operation
+                // This improves performance by preventing change tracking
+                // Use Select() projection to map only required fields directly in query
+                // Do NOT include Gyms navigation property
+                var gymOwners = await _dbContext.GymOwners
+                    .AsNoTracking()
+                    .Select(g => new GymOwnerResponseDto
+                    {
+                        Id = g.Id,
+                        FullName = g.FullName,
+                        UserName = g.UserName,
+                        Email = g.Email,
+                        PhoneNumber = g.PhoneNumber,
+                        CreatedAt = g.CreatedAt,
+                        IsActive = g.IsActive
+                        // Password and PasswordHash intentionally excluded for security
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation("Retrieved {Count} GymOwners total", gymOwners.Count);
+
+                return gymOwners;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all GymOwners");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a GymOwner by their unique identifier with all related Gyms.
+        /// Read-only operation using AsNoTracking for performance.
+        /// 
+        /// Returns:
+        /// - GymOwner basic information
+        /// - All Gyms owned by this GymOwner
+        /// - Basic information for each Gym
         /// </summary>
         /// <param name="id">The unique identifier of the GymOwner to retrieve</param>
-        /// <returns>GymOwnerResponseDto if found, null if not found or id is invalid</returns>
-        public async Task<GymOwnerResponseDto?> GetByIdAsync(int id)
+        /// <returns>GymOwnerDetailsDto with Gyms if found, null if not found or id is invalid</returns>
+        public async Task<GymOwnerDetailsDto?> GetByIdAsync(int id)
         {
             try
             {
@@ -177,43 +227,52 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     return null;
                 }
 
-                _logger.LogInformation("Retrieving GymOwner with ID: {GymOwnerId}", id);
+                _logger.LogInformation("Retrieving GymOwner with ID: {GymOwnerId} including related Gyms", id);
 
                 // ============================================
                 // RETRIEVE FROM DATABASE (READ-ONLY)
                 // ============================================
                 // Use AsNoTracking() because this is a read-only operation
                 // This improves performance by preventing change tracking
-                var gymOwner = await _dbContext.GymOwners
+                // Use Select() projection with nested Select() for Gyms mapping
+                // This loads GymOwner with all related Gyms in a single query
+                var gymOwnerDetails = await _dbContext.GymOwners
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == id);
+                    .Where(g => g.Id == id)
+                    .Select(g => new GymOwnerDetailsDto
+                    {
+                        Id = g.Id,
+                        FullName = g.FullName ,
+                        UserName = g.UserName ,
+                        Email = g.Email ?? string.Empty,
+                        PhoneNumber = g.PhoneNumber ?? string.Empty,
+                        CreatedAt = g.CreatedAt,
+                        IsActive = g.IsActive,
+                        // Map all related Gyms to GymSummaryDto
+                        // Only include basic Gym information
+                        // Do NOT load Members, Trainers, Subscriptions, MembershipPlans
+                        Gyms = g.Gyms.Select(gym => new GymSummaryDto
+                        {
+                            Id = gym.Id,
+                            Name = gym.Name,
+                            Address = gym.Address ,
+                            PhoneNumber = gym.PhoneNumber,
+                            CreatedAt = gym.CreatedAt
+                        }).ToList()
+                    })
+                    .FirstOrDefaultAsync();
 
                 // Return null if not found
-                if (gymOwner == null)
+                if (gymOwnerDetails == null)
                 {
                     _logger.LogInformation("GymOwner not found with ID: {GymOwnerId}", id);
                     return null;
                 }
 
-                // ============================================
-                // MAP ENTITY TO DTO (MANUAL MAPPING)
-                // ============================================
-                var response = new GymOwnerResponseDto
-                {
-                    Id = gymOwner.Id,
-                    FullName = gymOwner.FullName,
-                    UserName = gymOwner.UserName,
-                    Email = gymOwner.Email,
-                    PhoneNumber = gymOwner.PhoneNumber,
-                    CreatedAt = gymOwner.CreatedAt,
-                    IsActive = gymOwner.IsActive
-                    // Password and PasswordHash intentionally excluded for security
-                };
+                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}, Username: {Username}, Gym Count: {GymCount}", 
+                    gymOwnerDetails.Id, gymOwnerDetails.UserName, gymOwnerDetails.Gyms.Count);
 
-                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}, Username: {Username}", 
-                    gymOwner.Id, gymOwner.UserName);
-
-                return response;
+                return gymOwnerDetails;
             }
             catch (Exception ex)
             {
