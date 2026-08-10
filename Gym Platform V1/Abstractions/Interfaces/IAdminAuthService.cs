@@ -1,4 +1,5 @@
 using Gym_Platform_V1.DTOs.Auth;
+using Gym_Platform_V1.Entities;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {
@@ -15,5 +16,7 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
         /// <param name="password">Admin password (plain text)</param>
         /// <returns>Login response containing token if successful</returns>
         Task<AdminLoginResponseDto> LoginAsync(AdminLoginRequestDto requestDto);
+
+        Task<Admin> GetAdminById(int id);
     }
 }

@@ -174,7 +174,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     Address = application.GymAddress,
                     PhoneNumber = application.GymPhoneNumber,
                     CreatedAt = DateTime.UtcNow,
-                    GymOwnerID = gymOwner.Id
+                    GymOwnerID = gymOwner.Id //
                 };
 
                 _dbContext.Gyms.Add(gym);

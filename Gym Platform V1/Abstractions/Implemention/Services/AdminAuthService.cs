@@ -2,6 +2,7 @@ using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.DTOs.Auth;
 using Gym_Management_System.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Gym_Platform_V1.Entities;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
 {
@@ -21,6 +22,26 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+        public async Task<Admin> GetAdminById(int id)
+        {
+            if (id < 0) throw new ArgumentOutOfRangeException(nameof(id));
+            var result = await _dbContext.Admins.FirstOrDefaultAsync(a => a.Id == id);
+            if (result == null)
+            {
+                _logger.LogWarning("Admin with ID {AdminId} not found", id);
+            }
+            if (!result.IsActive)
+            {
+                _logger.LogWarning("Admin with ID {AdminId} is inactive", id);
+            }
+            return result;
+        }
+
+
+
+
+
 
         /// <summary>
         /// Authenticates an Admin user by username and password.

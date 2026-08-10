@@ -1,5 +1,6 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.DTOs.Auth;
+using Gym_Platform_V1.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gym_Platform_V1.Controllers
@@ -69,6 +70,26 @@ namespace Gym_Platform_V1.Controllers
                         Success = false,
                         Message = "An error occurred during login"
                     });
+            }
+        }
+        [HttpGet]
+        [Route("admin/{id}")]
+        public async Task<ActionResult<Admin>> GetAdminById(int id)
+        {
+            try
+            {
+                var admin = await _authService.GetAdminById(id);
+                if (admin == null)
+                {
+                    _logger.LogWarning("Admin with ID {AdminId} not found", id);
+                    return NotFound();
+                }
+                return Ok(admin);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving Admin with ID {AdminId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the admin");
             }
         }
     }
