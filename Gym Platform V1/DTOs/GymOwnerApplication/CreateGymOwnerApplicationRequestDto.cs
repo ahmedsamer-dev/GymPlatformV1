@@ -20,7 +20,8 @@ namespace Gym_Platform_V1.DTOs.GymOwnerApplication
         /// Full name of the applicant.
         /// </summary>
         [Required(ErrorMessage = "Full name is required")]
-        [StringLength(100, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 100 characters")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Full name must be between 3 and 100 characters")]
+        [RegularExpression(@"^[a-zA-Z\u0600-\u06FF\s]+$", ErrorMessage = "Full name must contain letters only.")]
         public string FullName { get; set; } = string.Empty;
 
         /// <summary>
@@ -48,6 +49,7 @@ namespace Gym_Platform_V1.DTOs.GymOwnerApplication
         /// </summary>
         [Required(ErrorMessage = "Phone number is required")]
         [StringLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
+        [RegularExpression(@"^01[0125][0-9]{8}$", ErrorMessage = "Invalid Egyptian phone number.")]
         public string PhoneNumber { get; set; } = string.Empty;
 
         /// <summary>
@@ -56,7 +58,7 @@ namespace Gym_Platform_V1.DTOs.GymOwnerApplication
         /// Never stored or returned as plain text.
         /// </summary>
         [Required(ErrorMessage = "Password is required")]
-        [StringLength(255, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be between 8 and 100 characters")]
         [RegularExpression(
             @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$",
             ErrorMessage = "Password must contain uppercase, lowercase, number, and special character")]
@@ -75,7 +77,7 @@ namespace Gym_Platform_V1.DTOs.GymOwnerApplication
         /// Used when the application is approved to create the Gym entity.
         /// </summary>
         [Required(ErrorMessage = "Gym address is required")]
-        [StringLength(250, MinimumLength = 5, ErrorMessage = "Gym address must be between 5 and 250 characters")]
+        [StringLength(250, ErrorMessage = "Gym address cannot exceed 250 characters")]
         public string GymAddress { get; set; } = string.Empty;
 
         /// <summary>
@@ -84,6 +86,7 @@ namespace Gym_Platform_V1.DTOs.GymOwnerApplication
         /// </summary>
         [Required(ErrorMessage = "Gym phone number is required")]
         [StringLength(20, ErrorMessage = "Gym phone number cannot exceed 20 characters")]
+        [RegularExpression(@"^01[0125][0-9]{8}$", ErrorMessage = "Invalid Egyptian phone number.")]
         public string GymPhoneNumber { get; set; } = string.Empty;
     }
 }
