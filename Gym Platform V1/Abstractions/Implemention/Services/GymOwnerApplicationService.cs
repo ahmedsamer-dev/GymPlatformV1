@@ -162,6 +162,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     PasswordHash = application.PasswordHash,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
+                    
                 };
 
                 _dbContext.GymOwners.Add(gymOwner);
@@ -234,7 +235,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         public async Task<IEnumerable<GymOwnerApplicationResponseDto>>
         GetPendingApplicationsAsync()
         {
-            return await _dbContext.GymOwnerApplications
+            return   await _dbContext.GymOwnerApplications
                 .AsNoTracking()
                 .Where(x => x.Status == ApplicationStatus.Pending)
                 .Select(x => new GymOwnerApplicationResponseDto
@@ -253,6 +254,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     RejectionReason = x.RejectionReason
                 })
                 .ToListAsync();
+           
         }
     }
 }

@@ -58,8 +58,12 @@ builder.Services.AddAuthorization();
 // ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+builder.Services.AddScoped<ITrainerAuthService, TrainerAuthService>();
 builder.Services.AddScoped<IGymOwnerService, GymOwnerService>();
 builder.Services.AddScoped<IGymOwnerApplicationService, GymOwnerApplicationService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IGymOwnerAuthService, GymOwnerAuthService>();
+builder.Services.AddScoped<ITrainerService, TrainerService>();
 
 // ============================================
 // API CONFIGURATION

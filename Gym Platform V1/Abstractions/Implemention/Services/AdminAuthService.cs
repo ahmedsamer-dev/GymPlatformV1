@@ -23,20 +23,31 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Admin> GetAdminById(int id)
-        {
-            if (id < 0) throw new ArgumentOutOfRangeException(nameof(id));
-            var result = await _dbContext.Admins.FirstOrDefaultAsync(a => a.Id == id);
-            if (result == null)
-            {
-                _logger.LogWarning("Admin with ID {AdminId} not found", id);
-            }
-            if (!result.IsActive)
-            {
-                _logger.LogWarning("Admin with ID {AdminId} is inactive", id);
-            }
-            return result;
-        }
+        //public async Task<Admin> GetAdminById(int id)
+        //{
+            
+        //    var admin = await _dbContext.Admins.FindAsync(id);
+
+          
+        //    if (admin == null)
+        //    {
+        //        _logger.LogWarning("Admin not found with ID: {AdminId}", id);
+        //        throw new KeyNotFoundException($"Admin with ID {id} not found.");
+        //    }
+        //    if (!admin.IsActive)
+        //    {
+        //        _logger.LogWarning("Attempt to access inactive Admin with ID: {AdminId}", id);
+        //        throw new InvalidOperationException($"Admin with ID {id} is inactive.");
+        //    }
+        //    if(admin.Id != id)
+        //    {
+        //        _logger.LogWarning("Admin ID mismatch: requested {RequestedId}, found {FoundId}", id, admin.Id);
+        //        throw new InvalidOperationException($"Admin ID mismatch: requested {id}, found {admin.Id}.");
+        //    }
+        //    return admin;
+
+
+        //}
 
 
 

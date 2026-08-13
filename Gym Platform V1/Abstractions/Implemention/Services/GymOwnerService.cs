@@ -227,52 +227,52 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     return null;
                 }
 
-                _logger.LogInformation("Retrieving GymOwner with ID: {GymOwnerId} including related Gyms", id);
+                _logger.LogInformation("Retrieving GymOwner with ID: {GymOwnerId} and their Gyms", id);
 
-                // ============================================
-                // RETRIEVE FROM DATABASE (READ-ONLY)
-                // ============================================
-                // Use AsNoTracking() because this is a read-only operation
-                // This improves performance by preventing change tracking
-                // Use Select() projection with nested Select() for Gyms mapping
-                // This loads GymOwner with all related Gyms in a single query
-                var gymOwnerDetails = await _dbContext.GymOwners
+                // First, load the GymOwner basic information (no navigation properties)
+                var owner = await _dbContext.GymOwners
                     .AsNoTracking()
                     .Where(g => g.Id == id)
                     .Select(g => new GymOwnerDetailsDto
                     {
                         Id = g.Id,
-                        FullName = g.FullName ,
-                        UserName = g.UserName ,
+                        FullName = g.FullName,
+                        UserName = g.UserName,
                         Email = g.Email ?? string.Empty,
                         PhoneNumber = g.PhoneNumber ?? string.Empty,
                         CreatedAt = g.CreatedAt,
                         IsActive = g.IsActive,
-                        // Map all related Gyms to GymSummaryDto
-                        // Only include basic Gym information
-                        // Do NOT load Members, Trainers, Subscriptions, MembershipPlans
-                        Gyms = g.Gyms.Select(gym => new GymSummaryDto
-                        {
-                            Id = gym.Id,
-                            Name = gym.Name,
-                            Address = gym.Address ,
-                            PhoneNumber = gym.PhoneNumber,
-                            CreatedAt = gym.CreatedAt
-                        }).ToList()
+                        Gyms = new List<GymSummaryDto>()
                     })
                     .FirstOrDefaultAsync();
 
-                // Return null if not found
-                if (gymOwnerDetails == null)
+                if (owner == null)
                 {
                     _logger.LogInformation("GymOwner not found with ID: {GymOwnerId}", id);
                     return null;
                 }
 
-                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}, Username: {Username}, Gym Count: {GymCount}", 
-                    gymOwnerDetails.Id, gymOwnerDetails.UserName, gymOwnerDetails.Gyms.Count);
+                // Load related Gyms explicitly to avoid any projection translation issues
 
-                return gymOwnerDetails;
+                var gyms = await _dbContext.Gyms
+                    .AsNoTracking()
+                    .Where(g => g.GymOwnerID == id)
+                    .Select(g => new GymSummaryDto
+                    {
+                        Id = g.Id,
+                        Name = g.Name,
+                        Address = g.Address,
+                        PhoneNumber = g.PhoneNumber,
+                        CreatedAt = g.CreatedAt
+                    })
+                    .ToListAsync();
+
+                owner.Gyms = gyms;
+
+                _logger.LogInformation("GymOwner retrieved successfully - ID: {GymOwnerId}, Username: {Username}, Gym Count: {GymCount}", 
+                    owner.Id, owner.UserName, owner.Gyms.Count);
+
+                return owner;
             }
             catch (Exception ex)
             {

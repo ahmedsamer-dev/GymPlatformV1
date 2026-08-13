@@ -64,7 +64,7 @@ namespace Gym_Platform_V1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during Admin login for user: {UserName}", request.UserName);
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new AdminLoginResponseDto
                     {
                         Success = false,
@@ -72,25 +72,25 @@ namespace Gym_Platform_V1.Controllers
                     });
             }
         }
-        [HttpGet]
-        [Route("admin/{id}")]
-        public async Task<ActionResult<Admin>> GetAdminById(int id)
-        {
-            try
-            {
-                var admin = await _authService.GetAdminById(id);
-                if (admin == null)
-                {
-                    _logger.LogWarning("Admin with ID {AdminId} not found", id);
-                    return NotFound();
-                }
-                return Ok(admin);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving Admin with ID {AdminId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the admin");
-            }
-        }
+
+        //public async Task<ActionResult<Admin>> GetAdminById(int id)
+        //{
+        //    try
+        //    {
+        //        var admin = await _authService.GetAdminById(id);
+        //        if (admin == null)
+        //        {
+        //            _logger.LogWarning("Admin with ID {AdminId} not found", id);
+        //            return NotFound();
+        //        }
+        //        return Ok(admin);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error retrieving Admin with ID {AdminId}", id);
+        //        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the admin");
+        //    }
+        //}
     }
+    
 }
