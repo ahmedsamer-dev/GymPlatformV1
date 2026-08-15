@@ -1,3 +1,4 @@
+using FluentValidation;
 using Gym_Management_System.Contexts;
 using Gym_Platform_V1.Abstractions.Implemention.Services;
 using Gym_Platform_V1.Abstractions.Interfaces;
@@ -24,6 +25,10 @@ var jwtKey = jwtSection.Key;
 var jwtIssuer = jwtSection.Issuer;
 var jwtAudience = jwtSection.Audience;
 
+// ============================================
+// FluentValidation 
+// ============================================
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly, includeInternalTypes: true);
 
 var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
@@ -48,6 +53,7 @@ builder.Services
         };
     });
 builder.Services.Configure<Jwtoptions>(builder.Configuration.GetSection("Jwt"));
+
 // ============================================
 // AUTHORIZATION CONFIGURATION
 // ============================================

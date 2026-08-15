@@ -5,5 +5,8 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
     public interface ITrainerService
     {
         Task<TrainerResponseDto> CreateTrainerAsync(int ownerId, CreateTrainerRequestDto request);
+        Task<List<TrainerResponseDto>> GetTrainersAsync(
+    int ownerId,
+    int? gymId);
     }
 }

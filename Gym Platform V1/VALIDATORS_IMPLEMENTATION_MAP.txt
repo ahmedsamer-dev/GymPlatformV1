@@ -1,0 +1,427 @@
+================================================================================
+					 VALIDATORS IMPLEMENTATION MAP
+================================================================================
+
+VALIDATOR DIRECTORY: Gym Platform V1\Validator\
+
+================================================================================
+AUTH VALIDATORS (3)
+================================================================================
+
+┌─ AdminLoginRequestDtoValidator.cs
+│  Purpose: Validate admin login credentials
+│  Rules:
+│    • UserName: NotEmpty, Length(3, 50)
+│    • Password: NotEmpty, Length(6, 255)
+│  Used by: AdminAuthController.Login()
+│  Status: ✓ UPDATED (fixed from existing validator)
+│
+├─ TrainerLoginRequestDtoValidator.cs
+│  Purpose: Validate trainer login credentials
+│  Rules:
+│    • UserName: NotEmpty, Length(3, 50)
+│    • Password: NotEmpty, Length(6, 255)
+│  Used by: TrainerAuthController.Login()
+│  Status: ✓ NEW
+│
+└─ GymOwnerLoginRequestDtoValidator.cs
+   Purpose: Validate gym owner login credentials
+   Rules:
+	 • UserName: NotEmpty, Length(3, 50)
+	 • Password: NotEmpty, Length(6, 255)
+   Used by: GymOwnerAuthController.Login()
+   Status: ✓ NEW
+
+================================================================================
+APPLICATION VALIDATORS (2)
+================================================================================
+
+┌─ CreateGymOwnerApplicationRequestDtoValidator.cs
+│  Purpose: Validate gym owner application submission
+│  Rules:
+│    • FullName: NotEmpty, Length(3, 100), Regex(letters+unicode)
+│    • UserName: NotEmpty, Length(3, 50), Regex(alphanumeric+underscore)
+│    • Email: NotEmpty, EmailAddress, MaxLength(150)
+│    • PhoneNumber: NotEmpty, Regex(EgyptianPhone)
+│    • Password: NotEmpty, Length(8, 100), Regex(complex)
+│    • GymName: NotEmpty, Length(2, 100)
+│    • GymAddress: NotEmpty, MaxLength(250)
+│    • GymPhoneNumber: NotEmpty, Regex(EgyptianPhone)
+│  Used by: GymOwnerApplicationController.Submit()
+│  Status: ✓ NEW
+│
+└─ RejectApplicationRequestDtoValidator.cs
+   Purpose: Validate application rejection reason
+   Rules:
+	 • RejectionReason: NotEmpty, Length(5, 500)
+   Used by: GymOwnerApplicationController.Reject()
+   Status: ✓ NEW
+
+================================================================================
+OWNER VALIDATORS (1)
+================================================================================
+
+└─ CreateGymOwnerRequestDtoValidator.cs
+   Purpose: Validate gym owner creation (admin endpoint)
+   Rules:
+	 • FullName: NotEmpty, Length(3, 100), Regex(letters+unicode)
+	 • UserName: NotEmpty, Length(3, 50), Regex(alphanumeric+underscore)
+	 • Email: NotEmpty, EmailAddress, MaxLength(150)
+	 • PhoneNumber: NotEmpty, Regex(EgyptianPhone)
+	 • Password: NotEmpty, Regex(complex)
+   Used by: GymOwnerController.Create()
+   Status: ✓ NEW
+
+================================================================================
+MEMBER VALIDATORS (1)
+================================================================================
+
+└─ CreateMemberRequestDtoValidator.cs
+   Purpose: Validate member creation by trainer
+   Rules:
+	 • FullName: NotEmpty, MaxLength(100)
+	 • PhoneNumber: NotEmpty, Regex(EgyptianPhone)
+   Used by: MemberController.CreateMember()
+   Status: ✓ NEW
+
+================================================================================
+TRAINER VALIDATORS (1)
+================================================================================
+
+└─ CreateTrainerRequestDtoValidator.cs
+   Purpose: Validate trainer creation by gym owner
+   Rules:
+	 • FullName: NotEmpty, MaxLength(100)
+	 • UserName: NotEmpty, Length(3, 50)
+	 • Password: NotEmpty, Length(6, 255)
+	 • PhoneNumber: NotEmpty, Regex(EgyptianPhone)
+	 • Salary: NotEmpty, GreaterThanOrEqualTo(0)
+	 • Address: MaxLength(250)
+	 • HireDate: NotEmpty, LessThanOrEqualTo(DateTime.UtcNow)
+	 • GymId: GreaterThan(0)
+   Used by: TrainerController.CreateTrainer()
+   Status: ✓ NEW
+
+================================================================================
+VALIDATOR SUMMARY TABLE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Validator Name                          │ DTO Name                      │ S │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ AdminLoginRequestDtoValidator           │ AdminLoginRequestDto          │ ✓ │
+│ TrainerLoginRequestDtoValidator         │ TrainerLoginRequestDto        │ ✓ │
+│ GymOwnerLoginRequestDtoValidator        │ GymOwnerLoginRequestDto       │ ✓ │
+│ CreateGymOwnerApplicationRequestDto...  │ CreateGymOwnerApplication...  │ ✓ │
+│ RejectApplicationRequestDtoValidator    │ RejectApplicationRequestDto   │ ✓ │
+│ CreateGymOwnerRequestDtoValidator       │ CreateGymOwnerRequestDto      │ ✓ │
+│ CreateMemberRequestDtoValidator         │ CreateMemberRequestDto        │ ✓ │
+│ CreateTrainerRequestDtoValidator        │ CreateTrainerRequestDto       │ ✓ │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+S = Status (✓ = Implemented)
+
+================================================================================
+VALIDATION FLOW BY ENDPOINT
+================================================================================
+
+1. POST /api/admin/login
+   ├─ Bind: JSON → AdminLoginRequestDto
+   ├─ Validate: AdminLoginRequestDtoValidator
+   └─ Service: AdminAuthService.LoginAsync()
+
+2. POST /api/trainer-auth/login
+   ├─ Bind: JSON → TrainerLoginRequestDto
+   ├─ Validate: TrainerLoginRequestDtoValidator
+   └─ Service: TrainerAuthService.LoginAsync()
+
+3. POST /api/gym-owner-auth/login
+   ├─ Bind: JSON → GymOwnerLoginRequestDto
+   ├─ Validate: GymOwnerLoginRequestDtoValidator
+   └─ Service: GymOwnerAuthService.LoginAsync()
+
+4. POST /api/gym-owner-applications
+   ├─ Bind: JSON → CreateGymOwnerApplicationRequestDto
+   ├─ Validate: CreateGymOwnerApplicationRequestDtoValidator
+   └─ Service: IGymOwnerApplicationService.SubmitApplicationAsync()
+
+5. POST /api/gym-owner-applications/{id}/reject
+   ├─ Bind: JSON → RejectApplicationRequestDto
+   ├─ Validate: RejectApplicationRequestDtoValidator
+   └─ Service: IGymOwnerApplicationService.RejectApplicationAsync()
+
+6. POST /api/gym-owners/create
+   ├─ Bind: JSON → CreateGymOwnerRequestDto
+   ├─ Validate: CreateGymOwnerRequestDtoValidator
+   └─ Service: IGymOwnerService.CreateAsync()
+
+7. POST /api/members
+   ├─ Bind: JSON → CreateMemberRequestDto
+   ├─ Validate: CreateMemberRequestDtoValidator
+   └─ Service: IMemberService.CreateMemberAsync()
+
+8. POST /api/trainers/create
+   ├─ Bind: JSON → CreateTrainerRequestDto
+   ├─ Validate: CreateTrainerRequestDtoValidator
+   └─ Service: ITrainerService.CreateTrainerAsync()
+
+================================================================================
+VALIDATION RULES BY CATEGORY
+================================================================================
+
+EMAIL VALIDATIONS (3 validators):
+  • CreateGymOwnerApplicationRequestDtoValidator
+  • CreateGymOwnerRequestDtoValidator
+  Rule: EmailAddress format check
+
+PHONE VALIDATIONS (5 validators):
+  • CreateGymOwnerApplicationRequestDtoValidator (2: personal + gym)
+  • CreateGymOwnerRequestDtoValidator
+  • CreateMemberRequestDtoValidator
+  • CreateTrainerRequestDtoValidator
+  Rule: Egyptian format ^01[0125][0-9]{8}$
+
+PASSWORD VALIDATIONS (3 validators):
+  • AdminLoginRequestDtoValidator
+  • TrainerLoginRequestDtoValidator
+  • GymOwnerLoginRequestDtoValidator
+  Rule: Length(6-255) for login
+
+  • CreateGymOwnerApplicationRequestDtoValidator
+  • CreateGymOwnerRequestDtoValidator
+  Rule: Length(8-100) + Complexity regex for registration
+
+USERNAME VALIDATIONS (6 validators):
+  • AdminLoginRequestDtoValidator
+  • TrainerLoginRequestDtoValidator
+  • GymOwnerLoginRequestDtoValidator
+  Rule: Length(3-50)
+
+  • CreateGymOwnerApplicationRequestDtoValidator
+  • CreateGymOwnerRequestDtoValidator
+  • CreateTrainerRequestDtoValidator
+  Rule: Length(3-50) + Alphanumeric + underscore regex
+
+PERSON NAME VALIDATIONS (2 validators):
+  • CreateGymOwnerApplicationRequestDtoValidator (FullName)
+  • CreateGymOwnerRequestDtoValidator (FullName)
+  Rule: Length(3-100) + Regex(letters + Arabic)
+
+BUSINESS NAME VALIDATIONS:
+  • CreateGymOwnerApplicationRequestDtoValidator (GymName)
+  Rule: Length(2-100)
+
+STRING LENGTH VALIDATIONS:
+  • CreateMemberRequestDtoValidator (FullName)
+  Rule: MaxLength(100)
+
+  • CreateTrainerRequestDtoValidator (FullName, Address)
+  Rule: MaxLength(100), MaxLength(250)
+
+  • CreateGymOwnerApplicationRequestDtoValidator (GymAddress)
+  Rule: MaxLength(250)
+
+  • RejectApplicationRequestDtoValidator (RejectionReason)
+  Rule: Length(5-500)
+
+NUMERIC VALIDATIONS:
+  • CreateTrainerRequestDtoValidator (Salary)
+  Rule: GreaterThanOrEqualTo(0)
+
+  • CreateTrainerRequestDtoValidator (GymId)
+  Rule: GreaterThan(0)
+
+DATE VALIDATIONS:
+  • CreateTrainerRequestDtoValidator (HireDate)
+  Rule: LessThanOrEqualTo(DateTime.UtcNow)
+
+================================================================================
+REGEX PATTERNS USED
+================================================================================
+
+1. Full Name (Arabic + English Letters)
+   Pattern: ^[a-zA-Z\u0600-\u06FF\s]+$
+   Examples: "Ahmed", "أحمد", "John Smith", "أحمد محمد"
+
+2. Username (Alphanumeric + Underscore)
+   Pattern: ^[a-zA-Z0-9_]+$
+   Examples: "ahmed_123", "trainer_01", "admin_user"
+
+3. Password Complexity (Login)
+   Pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$
+   Requirements: 
+	 • Minimum 8 characters
+	 • At least one lowercase letter
+	 • At least one uppercase letter
+	 • At least one digit
+	 • At least one special character (@$!%*?&)
+
+4. Egyptian Phone Number
+   Pattern: ^01[0125][0-9]{8}$
+   Format: 01XNNNNNNNN where X is 0,1,2, or 5
+   Examples: "01012345678", "01156789012", "01201234567"
+
+================================================================================
+CONFIGURATION IN PROGRAM.CS
+================================================================================
+
+Location: Gym Platform V1\Program.cs (lines 31-33)
+
+Configuration:
+```csharp
+// FluentValidation - Auto-discover and register all validators
+builder.Services.AddValidatorsFromAssembly(
+	typeof(Program).Assembly, 
+	includeInternalTypes: true
+);
+```
+
+Result:
+  ✓ All IValidator<T> implementations discovered automatically
+  ✓ All validators registered in dependency injection container
+  ✓ Validation applied to all [FromBody] parameters
+  ✓ No manual validator registration needed
+
+================================================================================
+RESPONSE DTO MAPPING
+================================================================================
+
+Request DTOs → Process → Response DTOs
+
+AdminLoginRequestDto
+  → AdminAuthService.LoginAsync()
+  → AdminLoginResponseDto
+
+TrainerLoginRequestDto
+  → TrainerAuthService.LoginAsync()
+  → TrainerLoginResponseDto (implied)
+
+GymOwnerLoginRequestDto
+  → GymOwnerAuthService.LoginAsync()
+  → GymOwnerLoginResponseDto (implied)
+
+CreateGymOwnerApplicationRequestDto
+  → GymOwnerApplicationService.SubmitApplicationAsync()
+  → GymOwnerApplicationResponseDto
+
+RejectApplicationRequestDto
+  → GymOwnerApplicationService.RejectApplicationAsync()
+  → (No content returned - 204 No Content)
+
+CreateGymOwnerRequestDto
+  → GymOwnerService.CreateAsync()
+  → GymOwnerResponseDto
+
+CreateMemberRequestDto
+  → MemberService.CreateMemberAsync()
+  → MemberResponseDto
+
+CreateTrainerRequestDto
+  → TrainerService.CreateTrainerAsync()
+  → TrainerResponseDto
+
+NOTE: All Response DTOs have NO validators (intentional)
+
+================================================================================
+ERROR HANDLING FLOW
+================================================================================
+
+1. VALIDATION ERROR (400 Bad Request)
+
+   Example Invalid Request:
+   {
+	 "userName": "ab",           ✗ Too short
+	 "email": "invalid",         ✗ Invalid format
+	 "phoneNumber": "123"        ✗ Wrong format
+   }
+
+   Response:
+   HTTP 400 Bad Request
+   {
+	 "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+	 "title": "One or more validation errors occurred.",
+	 "status": 400,
+	 "errors": {
+	   "UserName": ["Username must be between 3 and 50 characters"],
+	   "Email": ["Invalid email format"],
+	   "PhoneNumber": ["Invalid Egyptian phone number"]
+	 }
+   }
+
+2. BUSINESS VALIDATION ERROR (409 Conflict or 400 Bad Request)
+
+   Example: Duplicate username
+
+   Response:
+   HTTP 409 Conflict
+   {
+	 "message": "Username 'admin_user' is already taken."
+   }
+
+3. AUTHORIZATION ERROR (401/403)
+
+   Response:
+   HTTP 401 Unauthorized or 403 Forbidden
+   {
+	 "message": "Access denied"
+   }
+
+4. DATABASE ERROR (500 Internal Server Error)
+
+   Response:
+   HTTP 500 Internal Server Error
+   {
+	 "message": "An unexpected error occurred",
+	 "traceId": "..."
+   }
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+Request DTOs:
+  • Gym Platform V1\DTOs\Auth\AdminLoginRequestDto.cs
+  • Gym Platform V1\DTOs\Auth\TrainerLoginRequestDto.cs
+  • Gym Platform V1\DTOs\Auth\GymOwnerLoginRequestDto.cs
+  • Gym Platform V1\DTOs\GymOwnerApplication\CreateGymOwnerApplicationRequestDto.cs
+  • Gym Platform V1\DTOs\GymOwnerApplication\RejectApplicationRequestDto.cs
+  • Gym Platform V1\DTOs\GymOwner\CreateGymOwnerRequestDto.cs
+  • Gym Platform V1\DTOs\Member\CreateMemberRequestDto.cs
+  • Gym Platform V1\DTOs\Trainer\CreateTrainerRequestDto.cs
+
+Validators:
+  • Gym Platform V1\Validator\AdminLoginRequestDtoValidator.cs
+  • Gym Platform V1\Validator\TrainerLoginRequestDtoValidator.cs
+  • Gym Platform V1\Validator\GymOwnerLoginRequestDtoValidator.cs
+  • Gym Platform V1\Validator\CreateGymOwnerApplicationRequestDtoValidator.cs
+  • Gym Platform V1\Validator\RejectApplicationRequestDtoValidator.cs
+  • Gym Platform V1\Validator\CreateGymOwnerRequestDtoValidator.cs
+  • Gym Platform V1\Validator\CreateMemberRequestDtoValidator.cs
+  • Gym Platform V1\Validator\CreateTrainerRequestDtoValidator.cs
+
+Configuration:
+  • Gym Platform V1\Program.cs
+
+Response DTOs (No validators):
+  • Gym Platform V1\DTOs\Auth\AdminLoginResponseDto.cs
+  • Gym Platform V1\DTOs\GymOwnerApplication\GymOwnerApplicationResponseDto.cs
+  • Gym Platform V1\DTOs\GymOwner\GymOwnerDetailsDto.cs
+  • Gym Platform V1\DTOs\GymOwner\GymOwnerResponseDto.cs
+  • Gym Platform V1\DTOs\GymOwner\GymSummaryDto.cs
+  • Gym Platform V1\DTOs\Member\CreateMemberResponseDto.cs
+  • Gym Platform V1\DTOs\Member\MemberResponseDto.cs
+  • Gym Platform V1\DTOs\Trainer\TrainerResponseDto.cs
+
+================================================================================
+VERSION INFORMATION
+================================================================================
+
+Framework: .NET 8.0
+FluentValidation Package: 12.1.1
+FluentValidation.DependencyInjectionExtensions: 12.1.1
+
+Build Status: ✓ SUCCESS
+Compilation: ✓ NO ERRORS
+Warnings: ✓ NONE
+
+================================================================================
