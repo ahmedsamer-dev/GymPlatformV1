@@ -10,5 +10,9 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
     int? gymId);
         Task<TrainerResponseDto> UpdateTrainerAsync(int ownerId, int trainerId, UpdateTrainerRequestDto request, int? gymId);
         Task<TrainerResponseDto?> GetTrainerByIdAsync(int ownerId, int trainerId);
+        Task SetTrainerStatusAsync(
+    int ownerId,
+    int trainerId,
+    bool active);
     }
 }

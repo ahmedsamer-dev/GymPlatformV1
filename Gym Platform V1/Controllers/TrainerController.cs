@@ -41,7 +41,7 @@ namespace Gym_Platform_V1.Controllers
 
                 // Return 201 Created with created trainer. No public GET by id currently exists,
                 // so return Created with empty location to indicate resource creation.
-                return Created("", created);
+                return CreatedAtAction(nameof(GetTrainerById), new { trainerId = created.Id }, created);
             }
             catch (InvalidOperationException ex)
             {
@@ -203,6 +203,82 @@ namespace Gym_Platform_V1.Controllers
             {
                 _logger.LogError(ex, "Unexpected error while retrieving trainer by id");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred" });
+            }
+        }
+
+        // PATCH /api/trainers/{trainerId}/deactivate
+        //
+        // Soft-deactivates a Trainer (IsActive = false). This is NOT a hard delete:
+        // the Trainer row stays in the database and the Trainer's Members are untouched.
+        //
+        // trainerId comes from the route.
+        // ownerId comes exclusively from the JWT — never from the client.
+        //
+        // All ownership/business validation lives in the service layer; the controller
+        // only translates exceptions into HTTP responses.
+  
+        [HttpPatch("{trainerId}")]
+        [Authorize(Roles = "GymOwner")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SetTrainerStatus(
+    int trainerId,
+    [FromQuery] bool active)
+        {
+            try
+            {
+                var ownerIdClaim =
+                    User.FindFirst("OwnerId")
+                    ?? User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (ownerIdClaim == null ||
+                    !int.TryParse(ownerIdClaim.Value, out var ownerId))
+                {
+                    _logger.LogWarning(
+                        "OwnerId claim missing or invalid while changing Trainer status.");
+
+                    return Unauthorized(new
+                    {
+                        message = "OwnerId claim missing or invalid"
+                    });
+                }
+
+                await _trainerService.SetTrainerStatusAsync(
+                    ownerId,
+                    trainerId,
+                    active);
+
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid Trainer status request.");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Trainer not found.");
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Invalid Trainer status operation.");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unexpected error while changing Trainer status.");
+
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message = "An unexpected error occurred"
+                    });
             }
         }
     }

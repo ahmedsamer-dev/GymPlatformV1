@@ -44,7 +44,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // and verify that it belongs to the authenticated Owner.
             var gym = await _dbContext.Gyms
            .FirstOrDefaultAsync(g =>
-            g.Id == request.GymId &&
+                  g.Id == request.GymId &&
             g.GymOwnerID == ownerId);
             if (gym == null)
             {
@@ -220,7 +220,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             // Reload the Gym navigation to reflect the potentially new Gym name in the response.
             // After changing GymId, the original .Gym reference may be stale.
-         await _dbContext.Entry(trainer).Reference(t => t.Gym).LoadAsync();
+            await _dbContext.Entry(trainer).Reference(t => t.Gym).LoadAsync();
 
             _logger.LogInformation("Trainer updated successfully. TrainerId: {TrainerId}, GymId: {GymId}", trainer.Id, trainer.GymId);
 
@@ -294,5 +294,73 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             return trainer;
         }
-    }
-    }
+
+        // Soft-deactivates a Trainer: sets IsActive = false WITHOUT deleting the row.
+        // The Trainer's Members are intentionally left untouched — deactivation only
+        // disables the Trainer's account, it never removes or modifies their data.
+        //
+        // ownerId: from JWT — never from the client.
+        // trainerId: from the route.
+     
+            public async Task SetTrainerStatusAsync(
+    int ownerId,
+    int trainerId,
+    bool active)
+        {
+            _logger.LogInformation(
+                "Changing Trainer status. TrainerId: {TrainerId}, OwnerId: {OwnerId}, Active: {Active}",
+                trainerId,
+                ownerId,
+                active);
+
+            if (trainerId <= 0)
+            {
+                _logger.LogWarning(
+                    "Invalid TrainerId: {TrainerId}",
+                    trainerId);
+
+                throw new ArgumentException($"Invalid TrainerId: {trainerId}");
+            }
+
+            var trainer = await _dbContext.Trainers
+                .Include(t => t.Gym)
+                .FirstOrDefaultAsync(t =>
+                    t.Id == trainerId &&
+                    t.Gym != null &&
+                    t.Gym.GymOwnerID == ownerId);
+
+            if (trainer == null)
+            {
+                _logger.LogWarning(
+                    "Trainer not found or does not belong to Owner. TrainerId: {TrainerId}, OwnerId: {OwnerId}",
+                    trainerId,
+                    ownerId);
+
+                throw new KeyNotFoundException(
+                    $"Trainer with id {trainerId} not found.");
+            }
+
+            if (trainer.IsActive == active)
+            {
+                _logger.LogInformation(
+                    "Trainer {TrainerId} is already {Status}.",
+                    trainerId,
+                    active ? "active" : "inactive");
+
+                throw new InvalidOperationException(
+                    $"Trainer is already {(active ? "active" : "inactive")}.");
+            }
+
+            trainer.IsActive = active;
+
+            await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Trainer status changed successfully. TrainerId: {TrainerId}, OwnerId: {OwnerId}, NewStatus: {Status}",
+                trainerId,
+                ownerId,
+                active ? "Active" : "Inactive");
+        } }
+}
+
+    
