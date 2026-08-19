@@ -1,11 +1,11 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Gym_Platform_V1.DTOs.Auth;
 
-namespace Gym_Platform_V1.Validator
+namespace Gym_Platform_V1.Validator.trainer
 {
-    internal sealed class AdminLoginRequestDtoValidator : AbstractValidator<AdminLoginRequestDto>
+    internal sealed class TrainerLoginRequestDtoValidator : AbstractValidator<TrainerLoginRequestDto>
     {
-        public AdminLoginRequestDtoValidator()
+        public TrainerLoginRequestDtoValidator()
         {
             RuleFor(x => x.UserName)
                 .NotEmpty().WithMessage("Username is required")

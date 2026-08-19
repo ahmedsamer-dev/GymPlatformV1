@@ -1,7 +1,7 @@
 using FluentValidation;
 using Gym_Platform_V1.DTOs.GymOwnerApplication;
 
-namespace Gym_Platform_V1.Validator
+namespace Gym_Platform_V1.Validator.owner
 {
     internal sealed class CreateGymOwnerApplicationRequestDtoValidator : AbstractValidator<CreateGymOwnerApplicationRequestDto>
     {

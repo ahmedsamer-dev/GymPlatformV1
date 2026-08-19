@@ -26,7 +26,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             var owner = await _dbContext.GymOwners
                 .Include(o => o.Gyms)
-                .FirstOrDefaultAsync(o => o.Id == ownerId);
+                .FirstOrDefaultAsync(o => o.Id == ownerId
+
+                );
 
             if (owner == null)
             {

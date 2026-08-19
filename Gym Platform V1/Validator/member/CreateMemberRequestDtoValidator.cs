@@ -1,7 +1,7 @@
 using FluentValidation;
 using Gym_Platform_V1.DTOs.Member;
 
-namespace Gym_Platform_V1.Validator
+namespace Gym_Platform_V1.Validator.member
 {
     internal sealed class CreateMemberRequestDtoValidator : AbstractValidator<CreateMemberRequestDto>
     {

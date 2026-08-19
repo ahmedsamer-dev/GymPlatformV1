@@ -70,6 +70,8 @@ builder.Services.AddScoped<IGymOwnerApplicationService, GymOwnerApplicationServi
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<IGymOwnerAuthService, GymOwnerAuthService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
+builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 // ============================================
 // API CONFIGURATION
