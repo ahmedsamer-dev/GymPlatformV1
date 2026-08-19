@@ -85,12 +85,12 @@ var app = builder.Build();
 // ============================================
 // HTTP PIPELINE CONFIGURATION
 // ============================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
 
 // Add Authentication middleware BEFORE Authorization

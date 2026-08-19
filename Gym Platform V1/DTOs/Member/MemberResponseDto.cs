@@ -35,7 +35,7 @@ namespace Gym_Platform_V1.DTOs.Member
         /// Gets or sets the Trainer's full name (for reference).
         /// </summary>
         public string? TrainerName { get; set; }
-
+  public string? gymName { get; set; }
         /// <summary>
         /// Gets or sets the creation timestamp.
         /// </summary>

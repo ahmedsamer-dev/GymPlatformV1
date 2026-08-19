@@ -35,9 +35,26 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             _logger.LogInformation("Creating Member for Trainer: {TrainerId}", trainerId);
 
+            //check Duplicate Member by phone within the same Gym
+            var phoneExists = await _context.Members
+         .AsNoTracking()
+       .AnyAsync(m => m.PhoneNumber == request.PhoneNumber && m.TrainerId == trainerId);
+
+            if (phoneExists)
+            {
+                _logger.LogWarning(
+                    "Attempt to create Member with existing phone number: {PhoneNumber}",
+                    request.PhoneNumber);
+
+                throw new InvalidOperationException(
+                    "A member with this phone number already exists.");
+            }
+
+
             // Load the Trainer from database to get their GymId
             var trainer = await _context.Trainers
                 .AsNoTracking()
+                .Include(t => t.Gym)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -60,7 +77,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 PhoneNumber = request.PhoneNumber,
                 CreatedAt = DateTime.UtcNow,
                 TrainerId = trainerId,   
-                GymId = trainer.GymId
+                GymId = trainer.GymId,
+               
+
             };
 
             _context.Members.Add(member);
@@ -78,7 +97,11 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 CreatedAt = member.CreatedAt,
                 TrainerId = member.TrainerId,
                 GymId = member.GymId,
-                TrainerName = trainer.FullName
+                TrainerName = trainer.FullName,
+                gymName = trainer.Gym?.Name
+
+
+
             };
         }
     }

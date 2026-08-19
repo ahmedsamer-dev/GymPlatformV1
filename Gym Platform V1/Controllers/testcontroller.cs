@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gym_Platform_V1.Controllers
 {
-    [Route("api/[controller]")]
+    // Dev-only endpoint, kept under the Admin prefix since it requires the Admin role.
+    [Route("api/admin/test")]
     [ApiController]
 
     public class TestController : ControllerBase

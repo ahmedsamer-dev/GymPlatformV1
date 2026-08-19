@@ -16,5 +16,6 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
         /// <param name="request">Member creation request with FullName and PhoneNumber</param>
         /// <returns>Created Member response DTO</returns>
         Task<MemberResponseDto> CreateMemberAsync(int trainerId, CreateMemberRequestDto request);
+        
     }
 }

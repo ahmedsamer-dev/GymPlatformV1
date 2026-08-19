@@ -1,10 +1,15 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.DTOs.GymOwnerApplication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gym_Platform_V1.Controllers
 {
+    /// <summary>
+    /// Public endpoint for submitting a GymOwner application.
+    /// The applicant does not have the GymOwner role yet, so this endpoint
+    /// requires no authentication. Admin review operations live in AdminController
+    /// under /api/admin/gym-owner-applications.
+    /// </summary>
     [ApiController]
     [Route("api/gym-owner-applications")]
     public class GymOwnerApplicationController : ControllerBase
@@ -31,7 +36,7 @@ namespace Gym_Platform_V1.Controllers
             try
             {
                 var response = await _service.SubmitApplicationAsync(request);
-                return CreatedAtAction(nameof(GetAll), null, response);
+                return Created("", response);
             }
             catch (InvalidOperationException ex)
             {
@@ -49,112 +54,6 @@ namespace Gym_Platform_V1.Controllers
                 _logger.LogError(ex, "Unexpected error while submitting application");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
             }
-        }
-
-        /// <summary>
-        /// Get all GymOwner applications. Admin only.
-        /// </summary>
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        [ProducesResponseType(typeof(IEnumerable<GymOwnerApplicationResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<IEnumerable<GymOwnerApplicationResponseDto>>> GetAll()
-        {
-            try
-            {
-                var list = await _service.GetApplicationsAsync();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error retrieving applications");
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
-            }
-        }
-
-        /// <summary>
-        /// Approve a pending application. Admin only.
-        /// </summary>
-        [HttpPost("{id}/approve")]
-        [Authorize(Roles = "Admin")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Approve(int id)
-        {
-            try
-            {
-                await _service.ApproveApplicationAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Application not found for approval: {Id}", id);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, "Invalid operation during approval: {Id}", id);
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error approving application: {Id}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
-            }
-        }
-
-        /// <summary>
-        /// Reject a pending application with a reason. Admin only.
-        /// </summary>
-        [HttpPost("{id}/reject")]
-        [Authorize(Roles = "Admin")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> Reject(int id, [FromBody] RejectApplicationRequestDto request)
-        {
-         
-            try
-            {
-                await _service.RejectApplicationAsync(id, request.RejectionReason);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Application not found for rejection: {Id}", id);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, "Invalid operation during rejection: {Id}", id);
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning(ex, "Invalid rejection request for: {Id}", id);
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error rejecting application: {Id}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
-            }
-        }
-        [HttpGet("pending")]
-        [Authorize(Roles = "Admin")]
-
-        public async Task<IActionResult> GetPendingApplications()
-        {
-            var applications =
-                await _service.GetPendingApplicationsAsync();
-
-            return Ok(applications);
         }
     }
 }
