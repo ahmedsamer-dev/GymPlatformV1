@@ -1,6 +1,7 @@
 using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
+using Gym_Platform_V1.Common.Exceptions;
 using Gym_Platform_V1.DTOs.Subscription;
 using Gym_Platform_V1.enums;
 using Microsoft.EntityFrameworkCore;
@@ -51,16 +52,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Trainer not found: {TrainerId}", trainerId);
                 throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
             }
-            var activeSubscriptionExists =
-        await _dbContext.Subscriptions.AnyAsync(s =>
-        s.MemberId == request.MemberId &&
-        s.Status == SubscriptionStatus.Active);
 
-            if (activeSubscriptionExists)
-            {
-                throw new InvalidOperationException(
-                    "Member already has an active subscription.");
-            }
             if (!trainer.IsActive)
             {
                 _logger.LogWarning("Inactive Trainer attempted to create a Subscription: {TrainerId}", trainerId);
@@ -85,18 +77,86 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning(
                     "TrainerId {TrainerId} attempted to create a Subscription for MemberId {MemberId} that belongs to TrainerId {OwnerTrainerId}",
                     trainerId, request.MemberId, member.TrainerId);
-                throw new UnauthorizedAccessException("You can only create subscriptions for your own members.");
+                throw new ForbiddenException("You can only create subscriptions for your own members.");
             }
 
-            // Load the MembershipPlan read-only — used to calculate the subscription fields.
+            // Build (validate ownership + active rule) and create, reusing the shared logic.
+            var subscription = await BuildSubscriptionForMemberAsync(trainerId, member, request.MembershipPlanId);
+
+            // Renewal rule: a renewal is simply a NEW Subscription; the previous one
+            // stays in the database untouched as history.
+            _dbContext.Subscriptions.Add(subscription);
+            await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Subscription created successfully. SubscriptionId: {SubscriptionId}, TrainerId: {TrainerId}, MemberId: {MemberId}, MembershipPlanId: {MembershipPlanId}",
+                subscription.Id, trainerId, member.Id, subscription.MembershipPlanId);
+
+            return ToResponseDto(subscription, member, null);
+        }
+
+        // Builds (WITHOUT saving) a Subscription for a Member that already belongs to the
+        // authenticated Trainer, using a MembershipPlan from the Trainer's Gym.
+        //
+        // Validation performed here (shared with CreateSubscriptionAsync):
+        //   - Trainer exists and is active
+        //   - no active Subscription already exists for the Member (safeguard)
+        //   - MembershipPlan exists AND MembershipPlan.GymId == Trainer.GymId
+        //
+        // The returned entity is NOT added to the DbContext and NOT saved. This lets
+        // MemberService add it together with the new Member and persist both in one
+        // transaction (atomic "create Member + first Subscription").
+        public async Task<Subscription> BuildSubscriptionForMemberAsync(
+            int trainerId,
+            Member member,
+            int membershipPlanId)
+        {
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
+
+            if (membershipPlanId <= 0)
+                throw new InvalidOperationException("Invalid membership plan identifier.");
+
+            _logger.LogInformation(
+                "BuildSubscriptionForMember requested by TrainerId: {TrainerId}, MembershipPlanId: {MembershipPlanId}",
+                trainerId, membershipPlanId);
+
+            // Load the Trainer read-only (validation only).
+            var trainer = await _dbContext.Trainers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == trainerId);
+
+            if (trainer == null)
+            {
+                _logger.LogWarning("Trainer not found: {TrainerId}", trainerId);
+                throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
+            }
+
+            if (!trainer.IsActive)
+            {
+                _logger.LogWarning("Inactive Trainer attempted to create a Subscription: {TrainerId}", trainerId);
+                throw new InvalidOperationException("Trainer account is inactive.");
+            }
+
+            // Safeguard: a Member must never have more than one active Subscription.
+            // For a brand-new Member this will naturally be false, but the rule is enforced.
+            var activeSubscriptionExists = await _dbContext.Subscriptions
+                .AnyAsync(s => s.MemberId == member.Id && s.Status == SubscriptionStatus.Active);
+
+            if (activeSubscriptionExists)
+            {
+                throw new InvalidOperationException("Member already has an active subscription.");
+            }
+
+            // Load the MembershipPlan read-only — used for both validation and calculation.
             var membershipPlan = await _dbContext.MembershipPlans
                 .AsNoTracking()
-                .FirstOrDefaultAsync(mp => mp.Id == request.MembershipPlanId);
+                .FirstOrDefaultAsync(mp => mp.Id == membershipPlanId);
 
             if (membershipPlan == null)
             {
-                _logger.LogWarning("MembershipPlan not found: {MembershipPlanId}", request.MembershipPlanId);
-                throw new KeyNotFoundException($"Membership plan with id {request.MembershipPlanId} not found.");
+                _logger.LogWarning("MembershipPlan not found: {MembershipPlanId}", membershipPlanId);
+                throw new KeyNotFoundException($"Membership plan with id {membershipPlanId} not found.");
             }
 
             // The Plan must belong to the same Gym as the Trainer/Member.
@@ -105,17 +165,30 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             {
                 _logger.LogWarning(
                     "TrainerId {TrainerId} (GymId {TrainerGymId}) attempted to use MembershipPlanId {MembershipPlanId} from GymId {PlanGymId}",
-                    trainerId, trainer.GymId, request.MembershipPlanId, membershipPlan.GymId);
-                throw new UnauthorizedAccessException("The membership plan does not belong to your gym.");
+                    trainerId, trainer.GymId, membershipPlanId, membershipPlan.GymId);
+                throw new ForbiddenException("The membership plan does not belong to your gym.");
             }
 
-            // All calculated values derive from the plan:
-            // - Time-based plan: EndDate = StartDate + DurationInDays, no sessions.
-            // - Session-based plan: RemainingSessions = plan.NumberOfSessions.
-            //   Session plans also have DurationInDays > 0 (enforced at plan creation),
-            //   so the same EndDate rule applies — no separate expiration rule exists in the project.
-            var subscription = new Subscription
+            var subscription = BuildSubscriptionEntity(member, membershipPlan);
+
+            _logger.LogInformation(
+                "Subscription entity built for TrainerId: {TrainerId}, MembershipPlanId: {MembershipPlanId}",
+                trainerId, membershipPlanId);
+
+            return subscription;
+        }
+
+        // Shared projection of a Subscription from a Member + MembershipPlan.
+        // All calculated values derive from the plan:
+        // - Time-based plan: EndDate = StartDate + DurationInDays, no sessions.
+        // - Session-based plan: RemainingSessions = plan.NumberOfSessions.
+        //   Session plans also have DurationInDays > 0 (enforced at plan creation),
+        //   so the same EndDate rule applies — no separate expiration rule exists in the project.
+        private static Subscription BuildSubscriptionEntity(Member member, MembershipPlan membershipPlan)
+        {
+            return new Subscription
             {
+                Member = member,
                 MemberId = member.Id,
                 MembershipPlanId = membershipPlan.Id,
                 StartDate = DateTime.UtcNow,
@@ -125,23 +198,20 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 Status = SubscriptionStatus.Active,
                 CreatedAt = DateTime.UtcNow
             };
+        }
 
-            // Renewal rule: a renewal is simply a NEW Subscription; the previous one
-            // stays in the database untouched as history.
-            _dbContext.Subscriptions.Add(subscription);
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Subscription created successfully. SubscriptionId: {SubscriptionId}, TrainerId: {TrainerId}, MemberId: {MemberId}, MembershipPlanId: {MembershipPlanId}",
-                subscription.Id, trainerId, member.Id, membershipPlan.Id);
-
+        private static SubscriptionResponseDto ToResponseDto(
+            Subscription subscription,
+            Member? member,
+            MembershipPlan? membershipPlan)
+        {
             return new SubscriptionResponseDto
             {
                 Id = subscription.Id,
                 MemberId = subscription.MemberId,
-                MemberName = member.FullName,
+                MemberName = member?.FullName,
                 MembershipPlanId = subscription.MembershipPlanId,
-                MembershipPlanName = membershipPlan.Name,
+                MembershipPlanName = membershipPlan?.Name,
                 StartDate = subscription.StartDate,
                 EndDate = subscription.EndDate,
                 TotalPrice = subscription.TotalPrice,
@@ -192,7 +262,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning(
                     "TrainerId {TrainerId} attempted to use a session on SubscriptionId {SubscriptionId} that belongs to another Trainer's member",
                     trainerId, subscriptionId);
-                throw new UnauthorizedAccessException("You can only use sessions for your own members' subscriptions.");
+                throw new ForbiddenException("You can only use sessions for your own members' subscriptions.");
             }
 
             // Only session-based Subscriptions carry usable sessions.
@@ -254,6 +324,65 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 Status = subscription.Status,
                 CreatedAt = subscription.CreatedAt
             };
+        }
+
+        // Retrieves the Subscriptions belonging to the authenticated Trainer's Members.
+        //
+        // trainerId: extracted from JWT — never accepted from the client.
+        //
+        // Ownership is enforced directly in the database query:
+        //   Subscription.Member.TrainerId == trainerId
+        // so a Trainer can only see Subscriptions of their own Members.
+        // The active status of the Trainer is NOT required for a read-only listing;
+        // existing write operations keep enforcing the active rule.
+        public async Task<List<SubscriptionResponseDto>> GetMySubscriptionsAsync(int trainerId)
+        {
+            if (trainerId <= 0)
+            {
+                _logger.LogWarning("Invalid TrainerId in GetMySubscriptionsAsync: {TrainerId}", trainerId);
+                throw new InvalidOperationException("Invalid trainer identifier.");
+            }
+
+            _logger.LogInformation("Retrieving subscriptions for TrainerId: {TrainerId}", trainerId);
+
+            // Validate that the authenticated Trainer exists (mirrors GetMyMembersAsync).
+            var trainer = await _dbContext.Trainers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == trainerId);
+
+            if (trainer == null)
+            {
+                _logger.LogWarning("Trainer not found: {TrainerId}", trainerId);
+                throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
+            }
+
+            // Single projection query. The ownership filter (Member.TrainerId == trainerId)
+            // is applied in the database — no in-memory filtering and no unnecessary Includes.
+            var subscriptions = await _dbContext.Subscriptions
+                .AsNoTracking()
+                .Where(s => s.Member != null && s.Member.TrainerId == trainerId)
+                .Select(s => new SubscriptionResponseDto
+                {
+                    Id = s.Id,
+                    MemberId = s.MemberId,
+                    MemberName = s.Member == null ? null : s.Member.FullName,
+                    MembershipPlanId = s.MembershipPlanId,
+                    MembershipPlanName = s.MembershipPlan == null ? null : s.MembershipPlan.Name,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate,
+                    TotalPrice = s.TotalPrice,
+                    RemainingSessions = s.RemainingSessions,
+                    Status = s.Status,
+                    CreatedAt = s.CreatedAt
+                })
+                .ToListAsync();
+
+            _logger.LogInformation(
+                "Subscriptions retrieved for Trainer {TrainerId}: {Count}",
+                trainerId,
+                subscriptions.Count);
+
+            return subscriptions;
         }
     }
 }

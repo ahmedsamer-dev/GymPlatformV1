@@ -1,7 +1,7 @@
 using FluentValidation;
 using Gym_Platform_V1.DTOs.Subscription;
 
-namespace Gym_Platform_V1.Validator
+namespace Gym_Platform_V1.Validator.subscription
 {
     // Input-level validation only. Trainer/Member/Plan relationship checks
     // require database access and stay in the service layer.

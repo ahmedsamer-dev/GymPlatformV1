@@ -41,7 +41,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Check duplicates in pending or existing applications (username, email, phone)
             var duplicateInApplications = await _dbContext.GymOwnerApplications
                 .AsNoTracking()
-                .AnyAsync(a => a.UserName == request.UserName || a.Email == request.Email || a.PhoneNumber == request.PhoneNumber || a.Status == ApplicationStatus.Pending);
+                .AnyAsync(a => a.UserName == request.UserName || a.Email == request.Email || a.PhoneNumber == request.PhoneNumber  || a.Status == ApplicationStatus.Pending);
 
             if (duplicateInApplications)
             {

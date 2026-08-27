@@ -14,6 +14,12 @@ namespace Gym_Platform_V1.Validator.member
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage("Phone number is required")
                 .Matches("^01[0125][0-9]{8}$").WithMessage("Invalid Egyptian phone number");
+
+            // MembershipPlanId is OPTIONAL. When supplied it must be a positive id.
+            // Existence and Gym-ownership are business validations handled in the service.
+            RuleFor(x => x.MembershipPlanId)
+                .GreaterThan(0).WithMessage("MembershipPlanId must be greater than 0")
+                .When(x => x.MembershipPlanId.HasValue);
         }
     }
 }

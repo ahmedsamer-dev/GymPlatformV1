@@ -1,4 +1,6 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
+using Gym_Platform_V1.Common.Exceptions;
+using Gym_Platform_V1.DTOs.Member;
 using Gym_Platform_V1.DTOs.MembershipPlan;
 using Gym_Platform_V1.DTOs.Trainer;
 using Microsoft.AspNetCore.Authorization;
@@ -18,16 +20,62 @@ namespace Gym_Platform_V1.Controllers
     {
         private readonly ITrainerService _trainerService;
         private readonly IMembershipPlanService _membershipPlanService;
+        private readonly IMemberService _memberService;
         private readonly ILogger<OwnerController> _logger;
 
         public OwnerController(
             ITrainerService trainerService,
             IMembershipPlanService membershipPlanService,
+            IMemberService memberService,
             ILogger<OwnerController> logger)
         {
             _trainerService = trainerService ?? throw new ArgumentNullException(nameof(trainerService));
             _membershipPlanService = membershipPlanService ?? throw new ArgumentNullException(nameof(membershipPlanService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _memberService = memberService ?? throw new ArgumentNullException(nameof(memberService));
+            _logger = logger ;
+        }
+
+        /// <summary>
+        /// Retrieves a Member belonging to a Gym owned by the authenticated GymOwner.
+        /// </summary>
+        /// <param name="memberId">The Member identifier</param>
+        /// <returns>Member details, or 404 when the Member is not accessible</returns>
+        [HttpGet("members/{memberId}")]
+        [ProducesResponseType(typeof(MemberDetailsResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<MemberDetailsResponseDto>> GetMemberById(int memberId)
+        {
+            try
+            {
+                if (memberId <= 0)
+                {
+                    return BadRequest(new { message = "Member ID must be greater than 0" });
+                }
+
+                var ownerIdClaim = User.FindFirst("OwnerId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+                if (ownerIdClaim == null || !int.TryParse(ownerIdClaim.Value, out var ownerId) || ownerId <= 0)
+                {
+                    _logger.LogWarning("OwnerId claim missing or invalid while retrieving Member");
+                    return Unauthorized(new { message = "OwnerId claim missing or invalid" });
+                }
+
+                var member = await _memberService.GetMemberByIdForOwnerAsync(ownerId, memberId);
+                if (member == null)
+                {
+                    return NotFound(new { message = $"Member with id {memberId} not found." });
+                }
+
+                return Ok(member);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while retrieving Member by Owner");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred" });
+            }
         }
 
         // ============================================
@@ -155,10 +203,10 @@ namespace Gym_Platform_V1.Controllers
                 _logger.LogWarning(ex, "Validation failed while updating trainer");
                 return BadRequest(new { message = ex.Message });
             }
-            catch (UnauthorizedAccessException ex)
+            catch (ForbiddenException ex)
             {
-                _logger.LogWarning(ex, "Authorization failed while updating trainer");
-                return Unauthorized(new { message = ex.Message });
+                _logger.LogWarning(ex, "Authorization/ownership check failed while updating trainer");
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -343,6 +391,39 @@ namespace Gym_Platform_V1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error while creating membership plan");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred" });
+            }
+        }
+
+        // GET /api/owner/membership-plans
+        //
+        // Returns the Membership Plans belonging to the authenticated GymOwner's Gyms.
+        // ownerId comes exclusively from the JWT token — never from the client.
+        // The authorized Gyms are resolved from the JWT identity inside the service,
+        // so an Owner can never see plans from another Owner's Gym.
+        // An empty result returns 200 OK with [].
+        [HttpGet("membership-plans")]
+        [ProducesResponseType(typeof(List<MembershipPlanResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<MembershipPlanResponseDto>>> GetMembershipPlans()
+        {
+            try
+            {
+                // ownerId is extracted from the JWT token, NOT from the client.
+                var ownerIdClaim = User.FindFirst("OwnerId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+                if (ownerIdClaim == null || !int.TryParse(ownerIdClaim.Value, out var ownerId))
+                {
+                    return Unauthorized(new { message = "OwnerId claim missing or invalid" });
+                }
+
+                var plans = await _membershipPlanService.GetPlansForOwnerAsync(ownerId);
+
+                return Ok(plans);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while retrieving membership plans for owner");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred" });
             }
         }

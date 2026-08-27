@@ -14,8 +14,7 @@ Console.WriteLine(BCrypt.Net.BCrypt.HashPassword("Admin@123"));
 // DATABASE CONFIGURATION
 // ============================================
 builder.Services.AddDbContext<GymPlatformDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ============================================
 // JWT AUTHENTICATION CONFIGURATION
@@ -60,6 +59,20 @@ builder.Services.Configure<Jwtoptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddAuthorization();
 
 // ============================================
+// CORS CONFIGURATION
+// ============================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Common frontend ports
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// ============================================
 // DEPENDENCY INJECTION
 // ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -90,12 +103,19 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
 }
+
+
+
 app.UseHttpsRedirection();
 
 // Add Authentication middleware BEFORE Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add CORS before routing/controllers
+app.UseCors("AllowFrontend");
 
 app.MapControllers();
 

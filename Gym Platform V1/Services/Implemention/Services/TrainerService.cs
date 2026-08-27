@@ -1,6 +1,7 @@
     using Gym_Management_System.Contexts;
     using Gym_Management_System.Entities;
     using Gym_Platform_V1.Abstractions.Interfaces;
+    using Gym_Platform_V1.Common.Exceptions;
     using Gym_Platform_V1.DTOs.Trainer;
     using Microsoft.EntityFrameworkCore;
 
@@ -184,7 +185,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             if (trainer.Gym == null || trainer.Gym.GymOwnerID != ownerId)
             {
                 _logger.LogWarning("OwnerId {OwnerId} attempted to update TrainerId {TrainerId} that does not belong to them", ownerId, trainerId);
-                throw new UnauthorizedAccessException("You can only update trainers that belong to your gyms.");
+                throw new ForbiddenException("You can only update trainers that belong to your gyms.");
             }
 
             // Optional gym move: if gymId is supplied, the Trainer will be moved to that Gym,
