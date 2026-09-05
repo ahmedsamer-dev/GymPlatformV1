@@ -1,6 +1,6 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.GymOwner;
-using Gym_Platform_V1.DTOs.GymOwnerApplication;
+using Gym_Platform_V1.data.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.GymOwnerApplication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

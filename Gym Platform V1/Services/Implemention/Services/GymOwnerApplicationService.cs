@@ -1,10 +1,10 @@
 ﻿using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.GymOwnerApplication;
+using Gym_Platform_V1.data.DTOs.GymOwnerApplication;
 using Gym_Platform_V1.Entities;
 using Gym_Platform_V1.enums;
-
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
@@ -41,7 +41,13 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Check duplicates in pending or existing applications (username, email, phone)
             var duplicateInApplications = await _dbContext.GymOwnerApplications
                 .AsNoTracking()
-                .AnyAsync(a => a.UserName == request.UserName || a.Email == request.Email || a.PhoneNumber == request.PhoneNumber  || a.Status == ApplicationStatus.Pending);
+                .AnyAsync(a =>
+                    a.Status == ApplicationStatus.Pending &&
+                    (
+                        a.UserName == request.UserName ||
+                        a.Email == request.Email ||
+                        a.PhoneNumber == request.PhoneNumber
+                    ));
 
             if (duplicateInApplications)
             {
@@ -71,21 +77,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             _logger.LogInformation("Application submitted successfully with ID: {ApplicationId}", application.Id);
 
-            var response = new GymOwnerApplicationResponseDto
-            {
-                Id = application.Id,
-                FullName = application.FullName,
-                UserName = application.UserName,
-                Email = application.Email,
-                PhoneNumber = application.PhoneNumber,
-                GymName = application.GymName,
-                GymAddress = application.GymAddress,
-                GymPhoneNumber = application.GymPhoneNumber,
-                Status = application.Status,
-                CreatedAt = application.CreatedAt,
-                ReviewedAt = application.ReviewedAt,
-                RejectionReason = application.RejectionReason
-            };
+            var response = application.Adapt<GymOwnerApplicationResponseDto>();
 
             return response;
         }
@@ -97,22 +89,10 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var list = await _dbContext.GymOwnerApplications
                 .AsNoTracking()
                 .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new GymOwnerApplicationResponseDto
-                {
-                    Id = a.Id,
-                    FullName = a.FullName,
-                    UserName = a.UserName,
-                    Email = a.Email,
-                    PhoneNumber = a.PhoneNumber,
-                    GymName = a.GymName,
-                    GymAddress = a.GymAddress,
-                    GymPhoneNumber = a.GymPhoneNumber,
-                    Status = a.Status,
-                    CreatedAt = a.CreatedAt,
-                    ReviewedAt = a.ReviewedAt,
-                    RejectionReason = a.RejectionReason
-                })
+                .ProjectToType<GymOwnerApplicationResponseDto>()
                 .ToListAsync();
+
+
 
             return list;
         }
@@ -235,26 +215,12 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         public async Task<IEnumerable<GymOwnerApplicationResponseDto>>
         GetPendingApplicationsAsync()
         {
-            return   await _dbContext.GymOwnerApplications
-                .AsNoTracking()
-                .Where(x => x.Status == ApplicationStatus.Pending)
-                .Select(x => new GymOwnerApplicationResponseDto
-                {
-                    Id = x.Id,
-                    FullName = x.FullName,
-                    UserName = x.UserName,
-                    Email = x.Email,
-                    PhoneNumber = x.PhoneNumber,
-                    GymName = x.GymName,
-                    GymAddress = x.GymAddress,
-                    GymPhoneNumber = x.GymPhoneNumber,
-                    Status = x.Status,
-                    CreatedAt = x.CreatedAt,
-                    ReviewedAt = x.ReviewedAt,
-                    RejectionReason = x.RejectionReason
-                })
-                .ToListAsync();
-           
+            return await _dbContext.GymOwnerApplications
+    .AsNoTracking()
+    .Where(x => x.Status == ApplicationStatus.Pending)
+    .ProjectToType<GymOwnerApplicationResponseDto>()
+    .ToListAsync();
+
         }
     }
 }

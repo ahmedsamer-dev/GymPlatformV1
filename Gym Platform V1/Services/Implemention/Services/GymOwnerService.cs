@@ -1,8 +1,9 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.GymOwner;
 using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Microsoft.EntityFrameworkCore;
+using Mapster;
+using Gym_Platform_V1.data.DTOs.GymOwner;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
 {
@@ -29,7 +30,32 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         }
 
         /// <summary>
+        /// Returns the Gyms belonging to the authenticated GymOwner.
+        ///
+        /// ownerId: extracted from JWT — never accepted from the client.
+        ///
+        /// Security flow: JWT → ownerId → Gyms WHERE GymOwnerID == ownerId.
+        /// A client can never retrieve another Owner's Gyms by supplying a different id.
+        /// Returns an empty list when the Owner owns no Gyms.
+        /// </summary>
+        public async Task<List<GymSummaryDto>> GetGymsForOwnerAsync(int ownerId)
+        {
+            _logger.LogInformation("Retrieving gyms for OwnerId: {OwnerId}", ownerId);
+
+            var gyms = await _dbContext.Gyms
+                .AsNoTracking()
+                .Where(g => g.GymOwnerID == ownerId)
+                .ProjectToType<GymSummaryDto>()
+                .ToListAsync();
+
+            _logger.LogInformation("Retrieved {Count} gym(s) for OwnerId: {OwnerId}", gyms.Count, ownerId);
+
+            return gyms;
+        }
+
+        /// <summary>
         /// Creates a new GymOwner with provided details.
+
         /// Validates business rules and persists to database.
         /// </summary>
         /// <param name="request">GymOwner creation request with validation</param>
@@ -120,17 +146,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 // ============================================
                 // CREATE AND RETURN RESPONSE
                 // ============================================
-                var response = new GymOwnerResponseDto
-                {
-                    Id = gymOwner.Id,
-                    FullName = gymOwner.FullName,
-                    UserName = gymOwner.UserName,
-                    Email = gymOwner.Email,
-                    PhoneNumber = gymOwner.PhoneNumber,
-                    CreatedAt = gymOwner.CreatedAt,
-                    IsActive = gymOwner.IsActive
-                    // Password and PasswordHash intentionally excluded
-                };
+                var response = gymOwner.Adapt<GymOwnerResponseDto>();
 
                 return response;
             }
@@ -181,22 +197,16 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 // Do NOT include Gyms navigation property
                 var gymOwners = await _dbContext.GymOwners
                     .AsNoTracking()
-                    .Select(g => new GymOwnerResponseDto
-                    {
-                        Id = g.Id,
-                        FullName = g.FullName,
-                        UserName = g.UserName,
-                        Email = g.Email,
-                        PhoneNumber = g.PhoneNumber,
-                        CreatedAt = g.CreatedAt,
-                        IsActive = g.IsActive
-                        // Password and PasswordHash intentionally excluded for security
-                    })
+                    .ProjectToType<GymOwnerResponseDto>()
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {Count} GymOwners total", gymOwners.Count);
 
                 return gymOwners;
+
+                // Password and PasswordHash intentionally excluded for security
+           
+              
             }
             catch (Exception ex)
             {
@@ -257,14 +267,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 var gyms = await _dbContext.Gyms
                     .AsNoTracking()
                     .Where(g => g.GymOwnerID == id)
-                    .Select(g => new GymSummaryDto
-                    {
-                        Id = g.Id,
-                        Name = g.Name,
-                        Address = g.Address,
-                        PhoneNumber = g.PhoneNumber,
-                        CreatedAt = g.CreatedAt
-                    })
+                    .ProjectToType<GymSummaryDto>()
                     .ToListAsync();
 
                 owner.Gyms = gyms;

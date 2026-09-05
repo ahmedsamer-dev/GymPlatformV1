@@ -1,7 +1,7 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.Auth;
 using Gym_Management_System.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Gym_Platform_V1.data.DTOs.Auth;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
 {

@@ -1,9 +1,10 @@
-    using Gym_Management_System.Contexts;
-    using Gym_Management_System.Entities;
-    using Gym_Platform_V1.Abstractions.Interfaces;
-    using Gym_Platform_V1.Common.Exceptions;
-    using Gym_Platform_V1.DTOs.Trainer;
-    using Microsoft.EntityFrameworkCore;
+using Gym_Management_System.Contexts;
+using Gym_Management_System.Entities;
+using Gym_Platform_V1.Abstractions.Interfaces;
+using Gym_Platform_V1.Common.Exceptions;
+using Gym_Platform_V1.data.DTOs.Trainer;
+using Mapster;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
 {
@@ -46,13 +47,18 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Find the Gym selected by the Owner
             // and verify that it belongs to the authenticated Owner.
             var gym = await _dbContext.Gyms
-           .FirstOrDefaultAsync(g =>
-                  g.Id == request.GymId &&
-            g.GymOwnerID == ownerId);
+                .FirstOrDefaultAsync(g => g.Id == request.GymId);
+
             if (gym == null)
             {
-                _logger.LogWarning("GymOwner {OwnerId} has no gym to add Trainer to", ownerId);
-                throw new InvalidOperationException("This Gym does not belong to the current GymOwner.");
+                _logger.LogWarning("Gym not found: {GymId}", request.GymId);
+                throw new KeyNotFoundException($"Gym with id {request.GymId} not found.");
+            }
+
+            if (gym.GymOwnerID != ownerId)
+            {
+                _logger.LogWarning("OwnerId {OwnerId} attempted to create Trainer in GymId {GymId} belonging to another owner.", ownerId, request.GymId);
+                throw new ForbiddenException("This Gym does not belong to the current GymOwner.");
             }
 
             // Check username uniqueness among Trainers
@@ -124,21 +130,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             }
 
             var trainers = await query
-                .Select(t => new TrainerResponseDto
-                {
-                    Id = t.Id,
-                    FullName = t.FullName ?? string.Empty,
-                    UserName = t.UserName ?? string.Empty,
-                    PhoneNumber = t.PhoneNumber ?? string.Empty,
-                    Salary = t.Salary,
-                    Address = t.Address ?? string.Empty,
-                    HireDate = t.HireDate,
-                    ImageUrl = t.ImageUrl,
-                    IsActive = t.IsActive,
-                    CreatedAt = t.CreatedAt,
-                    GymId = t.GymId,
-                    GymName = t.Gym!.Name
-                })
+                .ProjectToType<TrainerResponseDto>()
                 .ToListAsync();
 
             _logger.LogInformation("Retrieved {Count} trainers for OwnerId: {OwnerId}", trainers.Count, ownerId);
@@ -267,21 +259,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 .Where(t => t.Id == trainerId &&
                             t.Gym != null &&
                             t.Gym.GymOwnerID == ownerId)
-                .Select(t => new TrainerResponseDto
-                {
-                    Id = t.Id,
-                    FullName = t.FullName ?? string.Empty,
-                    UserName = t.UserName ?? string.Empty,
-                    PhoneNumber = t.PhoneNumber ?? string.Empty,
-                    Salary = t.Salary,
-                    Address = t.Address ?? string.Empty,
-                    HireDate = t.HireDate,
-                    ImageUrl = t.ImageUrl,
-                    IsActive = t.IsActive,
-                    CreatedAt = t.CreatedAt,
-                    GymId = t.GymId,
-                    GymName = t.Gym!.Name
-                })
+                .ProjectToType<TrainerResponseDto>()
                 .FirstOrDefaultAsync();
 
             if (trainer == null)

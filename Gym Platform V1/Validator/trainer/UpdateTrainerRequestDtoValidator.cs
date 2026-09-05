@@ -1,5 +1,5 @@
 using FluentValidation;
-using Gym_Platform_V1.DTOs.Trainer;
+using Gym_Platform_V1.data.DTOs.Trainer;
 
 namespace Gym_Platform_V1.Validator.trainer
 {

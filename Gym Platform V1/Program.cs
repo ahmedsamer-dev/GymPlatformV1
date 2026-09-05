@@ -3,13 +3,14 @@ using Gym_Management_System.Contexts;
 using Gym_Platform_V1.Abstractions.Implemention.Services;
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.optins;
+using Gym_Platform_V1.options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-Console.WriteLine(BCrypt.Net.BCrypt.HashPassword("Admin@123"));
+//Console.WriteLine(BCrypt.Net.BCrypt.HashPassword("Admin@123"));
 // ============================================
 // DATABASE CONFIGURATION
 // ============================================
@@ -56,19 +57,25 @@ builder.Services.Configure<Jwtoptions>(builder.Configuration.GetSection("Jwt"));
 // ============================================
 // AUTHORIZATION CONFIGURATION
 // ============================================
+builder.Services.Configure<CorsSettings>(
+builder.Configuration.GetSection("CorsSettings"));
 builder.Services.AddAuthorization();
 
 // ============================================
 // CORS CONFIGURATION
 // ============================================
+var corsSettings = builder.Configuration
+    .GetSection("CorsSettings")
+    .Get<CorsSettings>();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Common frontend ports
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .WithOrigins(corsSettings!.AllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -85,6 +92,10 @@ builder.Services.AddScoped<IGymOwnerAuthService, GymOwnerAuthService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+// ============================================
+// MapsterConfig.RegisterMappings();
+// ============================================
+MapsterConfig.RegisterMappings();
 
 // ============================================
 // API CONFIGURATION
@@ -99,11 +110,11 @@ var app = builder.Build();
 // HTTP PIPELINE CONFIGURATION
 // ============================================
 
-if (app.Environment.IsDevelopment())
-{
+
+if(app.Environment.IsDevelopment())
+{   
     app.UseSwagger();
     app.UseSwaggerUI();
-
 }
 
 
@@ -115,7 +126,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Add CORS before routing/controllers
-app.UseCors("AllowFrontend");
+app.UseCors("FrontendPolicy");
 
 app.MapControllers();
 

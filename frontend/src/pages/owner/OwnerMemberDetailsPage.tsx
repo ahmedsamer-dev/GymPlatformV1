@@ -46,10 +46,10 @@ export const OwnerMemberDetailsPage: React.FC = () => {
   if (!details) return null;
 
   const infoItems = [
-    { icon: <Phone size={16} />, label: 'Phone Number', value: details.member.phoneNumber },
-    { icon: <Calendar size={16} />, label: 'Joined Date', value: new Date(details.member.createdAt).toLocaleDateString() },
-    { icon: <Dumbbell size={16} />, label: 'Assigned Trainer', value: details.trainer.fullName, highlight: true },
-    { icon: <Building size={16} />, label: 'Gym', value: details.gym.name },
+    { icon: <Phone size={16} />, label: 'Phone Number', value: details.phoneNumber },
+    { icon: <Calendar size={16} />, label: 'Joined Date', value: new Date(details.createdAt).toLocaleDateString() },
+    { icon: <Dumbbell size={16} />, label: 'Assigned Trainer', value: details.trainerName || `Trainer #${details.trainerId}`, highlight: true },
+    { icon: <Building size={16} />, label: 'Gym', value: details.gymName || `Gym #${details.gymId}` },
   ];
 
   return (
@@ -106,10 +106,10 @@ export const OwnerMemberDetailsPage: React.FC = () => {
                 margin: 0,
               }}
             >
-              {details.member.fullName}
+              {details.fullName}
             </h2>
             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-              Member ID: {details.member.id}
+              Member ID: {details.id}
             </p>
           </div>
         </div>

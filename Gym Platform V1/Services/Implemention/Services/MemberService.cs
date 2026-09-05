@@ -1,7 +1,8 @@
 ﻿using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.Member;
+using Gym_Platform_V1.data.DTOs.Member;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
@@ -167,17 +168,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var member = await _context.Members
                 .AsNoTracking()
                 .Where(m => m.Id == memberId && m.TrainerId == trainerId)
-                .Select(m => new MemberDetailsResponseDto
-                {
-                    Id = m.Id,
-                    FullName = m.FullName,
-                    PhoneNumber = m.PhoneNumber,
-                    CreatedAt = m.CreatedAt,
-                    TrainerId = m.TrainerId,
-                    TrainerName = m.Trainer == null ? null : m.Trainer.FullName,
-                    GymId = m.GymId,
-                    GymName = m.Gym == null ? null : m.Gym.Name
-                })
+                .ProjectToType<MemberDetailsResponseDto>()
                 .FirstOrDefaultAsync();
 
             if (member == null)
@@ -213,17 +204,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var member = await _context.Members
                 .AsNoTracking()
                 .Where(m => m.Id == memberId && m.Gym != null && m.Gym.GymOwnerID == ownerId)
-                .Select(m => new MemberDetailsResponseDto
-                {
-                    Id = m.Id,
-                    FullName = m.FullName,
-                    PhoneNumber = m.PhoneNumber,
-                    CreatedAt = m.CreatedAt,
-                    TrainerId = m.TrainerId,
-                    TrainerName = m.Trainer == null ? null : m.Trainer.FullName,
-                    GymId = m.GymId,
-                    GymName = m.Gym == null ? null : m.Gym.Name
-                })
+                .ProjectToType<MemberDetailsResponseDto>()
                 .FirstOrDefaultAsync();
 
             if (member == null)
@@ -409,17 +390,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             // Project directly to the response DTO and execute in the database.
             var members = await query
-                .Select(m => new MemberResponseDto
-                {
-                    Id = m.Id,
-                    FullName = m.FullName,
-                    PhoneNumber = m.PhoneNumber,
-                    CreatedAt = m.CreatedAt,
-                    TrainerId = m.TrainerId,
-                    GymId = m.GymId,
-                    TrainerName = m.Trainer == null ? null : m.Trainer.FullName,
-                    gymName = m.Gym == null ? null : m.Gym.Name
-                })
+                .ProjectToType<MemberResponseDto>()
                 .ToListAsync();
 
             _logger.LogInformation("Retrieved {Count} Members for Trainer {TrainerId}", members.Count, trainerId);

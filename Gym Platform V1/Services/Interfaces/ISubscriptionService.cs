@@ -1,5 +1,5 @@
 using Gym_Management_System.Entities;
-using Gym_Platform_V1.DTOs.Subscription;
+using Gym_Platform_V1.data.DTOs.Subscription;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {

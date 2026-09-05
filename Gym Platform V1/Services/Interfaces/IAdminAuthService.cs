@@ -1,4 +1,4 @@
-using Gym_Platform_V1.DTOs.Auth;
+using Gym_Platform_V1.data.DTOs.Auth;
 using Gym_Platform_V1.Entities;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces

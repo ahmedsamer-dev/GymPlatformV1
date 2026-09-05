@@ -1,5 +1,5 @@
 using FluentValidation;
-using Gym_Platform_V1.DTOs.Subscription;
+using Gym_Platform_V1.data.DTOs.Subscription;
 
 namespace Gym_Platform_V1.Validator.subscription
 {

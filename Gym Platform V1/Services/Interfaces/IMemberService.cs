@@ -1,4 +1,4 @@
-﻿using Gym_Platform_V1.DTOs.Member;
+﻿using Gym_Platform_V1.data.DTOs.Member;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {

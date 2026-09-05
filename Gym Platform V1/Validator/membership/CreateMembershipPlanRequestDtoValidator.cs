@@ -1,5 +1,5 @@
 using FluentValidation;
-using Gym_Platform_V1.DTOs.MembershipPlan;
+using Gym_Platform_V1.data.DTOs.MembershipPlan;
 
 namespace Gym_Platform_V1.Validator.membership
 {

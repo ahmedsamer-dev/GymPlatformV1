@@ -1,10 +1,11 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.Common.Exceptions;
-using Gym_Platform_V1.DTOs.Member;
-using Gym_Platform_V1.DTOs.MembershipPlan;
-using Gym_Platform_V1.DTOs.Subscription;
+using Gym_Platform_V1.data.DTOs.Member;
+using Gym_Platform_V1.data.DTOs.MembershipPlan;
+using Gym_Platform_V1.data.DTOs.Subscription;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Gym_Platform_V1.Controllers
@@ -358,6 +359,11 @@ namespace Gym_Platform_V1.Controllers
             {
                 _logger.LogWarning(ex, "Validation failed while creating subscription");
                 return BadRequest(new { message = ex.Message });
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error while creating subscription. Inner: {InnerMessage}", ex.InnerException?.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred while saving the subscription" });
             }
             catch (Exception ex)
             {

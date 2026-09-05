@@ -1,5 +1,5 @@
 using FluentValidation;
-using Gym_Platform_V1.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.GymOwner;
 
 namespace Gym_Platform_V1.Validator.owner
 {

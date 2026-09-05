@@ -1,7 +1,0 @@
-namespace Gym_Platform_V1.DTOs.GymOwnerApplication
-{
-    public class RejectApplicationRequestDto
-    {
-        public string RejectionReason { get; set; } = string.Empty;
-    }
-}

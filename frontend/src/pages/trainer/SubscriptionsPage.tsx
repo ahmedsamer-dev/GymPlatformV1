@@ -18,7 +18,7 @@ import { Select } from '../../components/ui/Select';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
 import { useDebounce } from '../../hooks/useDebounce';
-import type { Member } from '../../types/shared';
+import { normalizeSubscriptionStatus, type Member, type Subscription } from '../../types/shared';
 
 type CreateSubscriptionFormValues = z.infer<typeof createSubscriptionSchema>;
 
@@ -50,6 +50,8 @@ export const SubscriptionsPage: React.FC = () => {
     queryKey: ['trainer', 'membership-plans'],
     queryFn: () => trainerApi.getMembershipPlans(),
   });
+
+  const plansMap = useMemo(() => new Map(plans?.map((p) => [p.id, p])), [plans]);
 
   // Server-side member search query (only runs when query >= 2 chars, modal open, and no member selected)
   const searchParams = useMemo(() => {
@@ -129,14 +131,37 @@ export const SubscriptionsPage: React.FC = () => {
   });
 
   const useSessionMutation = useMutation({
-    mutationFn: trainerApi.useSession,
-    onSuccess: () => {
+    mutationFn: (subscriptionId: number) => trainerApi.useSession(subscriptionId),
+    onSuccess: (updatedSub) => {
+      queryClient.setQueryData<Subscription[]>(['trainer', 'subscriptions'], (old) => {
+        if (!old) return old;
+        return old.map((sub) => (sub.id === updatedSub.id ? updatedSub : sub));
+      });
       queryClient.invalidateQueries({ queryKey: ['trainer', 'subscriptions'] });
       setUseSessionTarget(null);
       toast.success('Session deducted successfully.');
     },
-    onError: () => {
-      toast.error('Failed to deduct session.');
+    onError: (error: any) => {
+      const status = error.response?.status;
+      let message = 'Failed to deduct session. Please try again.';
+
+      if (status === 400) {
+        message = error.response?.data?.message || 'Subscription is not eligible to use a session.';
+      } else if (status === 401) {
+        message = 'Your session has expired. Please log in again.';
+      } else if (status === 403) {
+        message = 'You do not have permission to deduct sessions for this subscription.';
+      } else if (status === 404) {
+        message = 'Subscription not found.';
+      } else if (status === 500) {
+        message = 'An unexpected server error occurred. Please try again later.';
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['trainer', 'subscriptions'] });
+      setUseSessionTarget(null);
+      toast.error(message);
     },
   });
 
@@ -232,7 +257,11 @@ export const SubscriptionsPage: React.FC = () => {
           emptyMessage="No subscriptions found."
         >
           {subscriptions?.map((sub) => {
-            const isSessionBased = sub.remainingSessions !== null && sub.remainingSessions !== undefined;
+            const plan = plansMap.get(sub.membershipPlanId);
+            const isSessionBased = plan !== undefined ? plan.isSessionBased : sub.remainingSessions > 0;
+            const normalizedStatus = normalizeSubscriptionStatus(sub.status);
+            const canUseSession = isSessionBased && normalizedStatus === 'Active' && sub.remainingSessions > 0;
+
             return (
               <TableRow key={sub.id}>
                 <TableCell>
@@ -248,8 +277,18 @@ export const SubscriptionsPage: React.FC = () => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={sub.status === 'Active' ? 'success' : sub.status === 'Expired' ? 'danger' : 'neutral'}>
-                    {sub.status}
+                  <Badge
+                    variant={
+                      normalizedStatus === 'Active'
+                        ? 'success'
+                        : normalizedStatus === 'Expired'
+                        ? 'danger'
+                        : normalizedStatus === 'Cancelled'
+                        ? 'neutral'
+                        : 'warning'
+                    }
+                  >
+                    {normalizedStatus}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -277,11 +316,13 @@ export const SubscriptionsPage: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {isSessionBased && sub.status === 'Active' && sub.remainingSessions > 0 ? (
+                  {canUseSession ? (
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => setUseSessionTarget({ id: sub.id, name: sub.memberName })}
+                      onClick={() => setUseSessionTarget({ id: sub.id, name: sub.memberName || `Member #${sub.memberId}` })}
+                      disabled={useSessionMutation.isPending}
+                      aria-label={`Use session for ${sub.memberName || 'member'}`}
                     >
                       <MinusCircle size={14} />
                       Use Session
@@ -299,15 +340,20 @@ export const SubscriptionsPage: React.FC = () => {
       {/* Use Session Confirm */}
       <ConfirmDialog
         isOpen={!!useSessionTarget}
-        onClose={() => setUseSessionTarget(null)}
+        onClose={() => {
+          if (!useSessionMutation.isPending) {
+            setUseSessionTarget(null);
+          }
+        }}
         onConfirm={() => {
           if (useSessionTarget) {
             useSessionMutation.mutate(useSessionTarget.id);
           }
         }}
         title="Use Session"
-        message={`Deduct one session from ${useSessionTarget?.name}'s subscription? This action cannot be undone.`}
+        message={`Use one session from ${useSessionTarget?.name}'s subscription? One session will be deducted.`}
         confirmLabel="Use Session"
+        cancelLabel="Cancel"
         variant="primary"
         isLoading={useSessionMutation.isPending}
       />

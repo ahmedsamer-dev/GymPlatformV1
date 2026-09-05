@@ -1,7 +1,8 @@
 using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.MembershipPlan;
+using Gym_Platform_V1.data.DTOs.MembershipPlan;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
@@ -141,17 +142,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var plans = await _dbContext.MembershipPlans
                 .AsNoTracking()
                 .Where(mp => gymIds.Contains(mp.GymId))
-                .Select(mp => new MembershipPlanResponseDto
-                {
-                    Id = mp.Id,
-                    Name = mp.Name,
-                    Price = mp.Price,
-                    DurationInDays = mp.DurationInDays,
-                    IsSessionBased = mp.IsSessionBased,
-                    NumberOfSessions = mp.NumberOfSessions,
-                    GymId = mp.GymId,
-                    CreatedAt = mp.CreatedAt
-                })
+                .ProjectToType<MembershipPlanResponseDto>()
                 .ToListAsync();
 
             _logger.LogInformation(
@@ -196,17 +187,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var plans = await _dbContext.MembershipPlans
                 .AsNoTracking()
                 .Where(mp => mp.GymId == trainer.GymId)
-                .Select(mp => new MembershipPlanResponseDto
-                {
-                    Id = mp.Id,
-                    Name = mp.Name,
-                    Price = mp.Price,
-                    DurationInDays = mp.DurationInDays,
-                    IsSessionBased = mp.IsSessionBased,
-                    NumberOfSessions = mp.NumberOfSessions,
-                    GymId = mp.GymId,
-                    CreatedAt = mp.CreatedAt
-                })
+                .ProjectToType<MembershipPlanResponseDto>()
                 .ToListAsync();
 
             _logger.LogInformation(

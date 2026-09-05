@@ -71,3 +71,14 @@ export const createSubscriptionSchema = z.object({
   memberId: z.number().min(1, 'Member is required'),
   membershipPlanId: z.number().min(1, 'Plan is required'),
 });
+
+// Admin Schemas
+export const rejectApplicationSchema = z.object({
+  rejectionReason: z
+    .string()
+    .trim()
+    .min(1, 'Rejection reason is required')
+    .min(5, 'Rejection reason must be between 5 and 500 characters')
+    .max(500, 'Rejection reason must be between 5 and 500 characters'),
+});
+

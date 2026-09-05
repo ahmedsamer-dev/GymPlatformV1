@@ -1,4 +1,4 @@
-using Gym_Platform_V1.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.GymOwner;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {
@@ -9,6 +9,14 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
     /// </summary>
     public interface IGymOwnerService
     {
+        /// <summary>
+        /// Returns the Gyms belonging to the authenticated GymOwner.
+        /// ownerId is extracted from JWT — never accepted from the client.
+        /// Returns an empty list when the Owner has no Gyms.
+        /// </summary>
+        /// <param name="ownerId">The authenticated Owner's id from JWT</param>
+        Task<List<GymSummaryDto>> GetGymsForOwnerAsync(int ownerId);
+
         /// <summary>
         /// Creates a new GymOwner with the provided details.
         /// 

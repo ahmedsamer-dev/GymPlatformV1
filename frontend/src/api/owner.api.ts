@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Trainer, MembershipPlan, MemberDetails } from '../types/shared';
+import type { Trainer, MembershipPlan, MemberDetails, GymSummary } from '../types/shared';
 
 export const ownerApi = {
   getTrainers: async (): Promise<Trainer[]> => {
@@ -21,7 +21,12 @@ export const ownerApi = {
   setTrainerStatus: async (id: number, active: boolean): Promise<void> => {
     await apiClient.patch(`/owner/trainers/${id}/status?active=${active}`);
   },
+  getMyGyms: async (): Promise<GymSummary[]> => {
+    const res = await apiClient.get('/owner/gyms');
+    return res.data;
+  },
   getMembershipPlans: async (): Promise<MembershipPlan[]> => {
+
     const res = await apiClient.get('/owner/membership-plans');
     return res.data;
   },

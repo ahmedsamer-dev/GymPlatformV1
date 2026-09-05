@@ -2,8 +2,9 @@ using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.Common.Exceptions;
-using Gym_Platform_V1.DTOs.Subscription;
+using Gym_Platform_V1.data.DTOs.Subscription;
 using Gym_Platform_V1.enums;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
@@ -92,7 +93,11 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 "Subscription created successfully. SubscriptionId: {SubscriptionId}, TrainerId: {TrainerId}, MemberId: {MemberId}, MembershipPlanId: {MembershipPlanId}",
                 subscription.Id, trainerId, member.Id, subscription.MembershipPlanId);
 
-            return ToResponseDto(subscription, member, null);
+            var plan = await _dbContext.MembershipPlans
+                .AsNoTracking()
+                .FirstOrDefaultAsync(mp => mp.Id == subscription.MembershipPlanId);
+
+            return ToResponseDto(subscription, member, plan);
         }
 
         // Builds (WITHOUT saving) a Subscription for a Member that already belongs to the
@@ -184,11 +189,17 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         // - Session-based plan: RemainingSessions = plan.NumberOfSessions.
         //   Session plans also have DurationInDays > 0 (enforced at plan creation),
         //   so the same EndDate rule applies — no separate expiration rule exists in the project.
+        //
+        // Entity tracking note:
+        // - For a brand-new Member (Id == 0), setting Member = member enables EF Core to
+        //   automatically link the generated Member identity upon insert in one transaction.
+        // - For an existing Member (Id > 0), Member navigation must remain null so EF Core
+        //   does NOT treat the detached Member entity as Added and attempt an invalid INSERT.
         private static Subscription BuildSubscriptionEntity(Member member, MembershipPlan membershipPlan)
         {
             return new Subscription
             {
-                Member = member,
+                Member = member.Id == 0 ? member : null,
                 MemberId = member.Id,
                 MembershipPlanId = membershipPlan.Id,
                 StartDate = DateTime.UtcNow,
@@ -361,20 +372,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var subscriptions = await _dbContext.Subscriptions
                 .AsNoTracking()
                 .Where(s => s.Member != null && s.Member.TrainerId == trainerId)
-                .Select(s => new SubscriptionResponseDto
-                {
-                    Id = s.Id,
-                    MemberId = s.MemberId,
-                    MemberName = s.Member == null ? null : s.Member.FullName,
-                    MembershipPlanId = s.MembershipPlanId,
-                    MembershipPlanName = s.MembershipPlan == null ? null : s.MembershipPlan.Name,
-                    StartDate = s.StartDate,
-                    EndDate = s.EndDate,
-                    TotalPrice = s.TotalPrice,
-                    RemainingSessions = s.RemainingSessions,
-                    Status = s.Status,
-                    CreatedAt = s.CreatedAt
-                })
+                .ProjectToType<SubscriptionResponseDto>()
                 .ToListAsync();
 
             _logger.LogInformation(

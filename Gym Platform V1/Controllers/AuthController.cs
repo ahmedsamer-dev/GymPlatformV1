@@ -1,5 +1,5 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.DTOs.Auth;
+using Gym_Platform_V1.data.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gym_Platform_V1.Controllers

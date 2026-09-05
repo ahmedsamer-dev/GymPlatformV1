@@ -1,3 +1,5 @@
+export type ApplicationStatus = 'Pending' | 'Approved' | 'Rejected' | 1 | 2 | 3;
+
 export interface GymOwnerApplication {
   id: number;
   fullName: string;
@@ -7,9 +9,23 @@ export interface GymOwnerApplication {
   gymName: string;
   gymAddress: string;
   gymPhoneNumber: string;
-  status: string;
+  status: ApplicationStatus | string | number;
   createdAt: string;
-  rejectionReason?: string;
+  reviewedAt?: string | null;
+  rejectionReason?: string | null;
+}
+
+export function normalizeApplicationStatus(status: ApplicationStatus | string | number | undefined | null): 'Pending' | 'Approved' | 'Rejected' {
+  if (status === 1 || status === '1' || status === 'Pending' || status === 'pending') {
+    return 'Pending';
+  }
+  if (status === 2 || status === '2' || status === 'Approved' || status === 'approved') {
+    return 'Approved';
+  }
+  if (status === 3 || status === '3' || status === 'Rejected' || status === 'rejected') {
+    return 'Rejected';
+  }
+  return 'Pending';
 }
 
 export interface Trainer {
@@ -38,7 +54,16 @@ export interface MembershipPlan {
   createdAt: string;
 }
 
+export interface GymSummary {
+  id: number;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  createdAt: string;
+}
+
 export interface Member {
+
   id: number;
   fullName: string;
   phoneNumber: string;
@@ -54,20 +79,34 @@ export interface CreateMemberRequestDto {
 }
 
 export interface MemberDetails {
-  member: {
-    id: number;
-    fullName: string;
-    phoneNumber: string;
-    createdAt: string;
-  };
-  trainer: {
-    id: number;
-    fullName: string;
-  };
-  gym: {
-    id: number;
-    name: string;
-  };
+  id: number;
+  fullName: string;
+  phoneNumber: string;
+  createdAt: string;
+  trainerId: number;
+  trainerName?: string | null;
+  gymId: number;
+  gymName?: string | null;
+}
+
+export type SubscriptionStatus = 'Pending' | 'Active' | 'Expired' | 'Cancelled' | 1 | 2 | 3 | 4;
+
+export function normalizeSubscriptionStatus(
+  status: SubscriptionStatus | string | number | undefined | null
+): 'Pending' | 'Active' | 'Expired' | 'Cancelled' {
+  if (status === 1 || status === '1' || status === 'Pending' || status === 'pending') {
+    return 'Pending';
+  }
+  if (status === 2 || status === '2' || status === 'Active' || status === 'active') {
+    return 'Active';
+  }
+  if (status === 3 || status === '3' || status === 'Expired' || status === 'expired') {
+    return 'Expired';
+  }
+  if (status === 4 || status === '4' || status === 'Cancelled' || status === 'cancelled') {
+    return 'Cancelled';
+  }
+  return 'Active';
 }
 
 export interface Subscription {
@@ -77,7 +116,7 @@ export interface Subscription {
   startDate: string;
   endDate: string;
   totalPrice: number;
-  status: string;
+  status: SubscriptionStatus | string | number;
   remainingSessions: number;
   createdAt: string;
   memberName: string;

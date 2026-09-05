@@ -1,8 +1,9 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.Common.Exceptions;
-using Gym_Platform_V1.DTOs.Member;
-using Gym_Platform_V1.DTOs.MembershipPlan;
-using Gym_Platform_V1.DTOs.Trainer;
+using Gym_Platform_V1.data.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.Member;
+using Gym_Platform_V1.data.DTOs.MembershipPlan;
+using Gym_Platform_V1.data.DTOs.Trainer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -21,18 +22,58 @@ namespace Gym_Platform_V1.Controllers
         private readonly ITrainerService _trainerService;
         private readonly IMembershipPlanService _membershipPlanService;
         private readonly IMemberService _memberService;
+        private readonly IGymOwnerService _gymOwnerService;
         private readonly ILogger<OwnerController> _logger;
 
         public OwnerController(
             ITrainerService trainerService,
             IMembershipPlanService membershipPlanService,
             IMemberService memberService,
+            IGymOwnerService gymOwnerService,
             ILogger<OwnerController> logger)
         {
             _trainerService = trainerService ?? throw new ArgumentNullException(nameof(trainerService));
             _membershipPlanService = membershipPlanService ?? throw new ArgumentNullException(nameof(membershipPlanService));
             _memberService = memberService ?? throw new ArgumentNullException(nameof(memberService));
-            _logger = logger ;
+            _gymOwnerService = gymOwnerService ?? throw new ArgumentNullException(nameof(gymOwnerService));
+            _logger = logger;
+        }
+
+        // GET /api/owner/gyms
+        //
+        // Returns the Gyms belonging to the authenticated GymOwner.
+        // The frontend uses this list to populate a Gym selector when creating a
+        // MembershipPlan — so the user never has to type a raw database ID.
+        //
+        // ownerId comes exclusively from the JWT token — never from the client.
+        // An Owner can never retrieve another Owner's Gyms by manipulating the request.
+        [HttpGet("gyms")]
+        [ProducesResponseType(typeof(List<GymSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<GymSummaryDto>>> GetMyGyms()
+        {
+            try
+            {
+                // ownerId is extracted from the JWT token, NOT from the client.
+                var ownerIdClaim = User.FindFirst("OwnerId") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+                if (ownerIdClaim == null || !int.TryParse(ownerIdClaim.Value, out var ownerId))
+                {
+                    _logger.LogWarning("OwnerId claim missing or invalid while retrieving owner gyms");
+                    return Unauthorized(new { message = "OwnerId claim missing or invalid" });
+                }
+
+                _logger.LogInformation("Retrieving gyms for OwnerId: {OwnerId}", ownerId);
+
+                var gyms = await _gymOwnerService.GetGymsForOwnerAsync(ownerId);
+
+                return Ok(gyms);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while retrieving owner's gyms");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred" });
+            }
         }
 
         /// <summary>
@@ -84,6 +125,11 @@ namespace Gym_Platform_V1.Controllers
 
         [HttpPost("trainers")]
         [ProducesResponseType(typeof(TrainerResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TrainerResponseDto>> CreateTrainer([FromBody] CreateTrainerRequestDto request)
         {
             try
@@ -111,6 +157,11 @@ namespace Gym_Platform_V1.Controllers
             {
                 _logger.LogWarning(ex, "Not found while creating trainer");
                 return NotFound(new { message = ex.Message });
+            }
+            catch (ForbiddenException ex)
+            {
+                _logger.LogWarning(ex, "Ownership validation failed while creating trainer");
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
             }
             catch (Exception ex)
             {
