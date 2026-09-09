@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageReference Include="Mapster" Version="10.0.9" />
+    <PackageReference Include="Mapster" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.29" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.17">
       <PrivateAssets>all</PrivateAssets>
@@ -31,10 +31,6 @@
     <Content Update="appsettings.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Common\Exceptions\" />
   </ItemGroup>
 
 </Project>

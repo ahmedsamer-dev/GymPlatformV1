@@ -1,9 +1,9 @@
 using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.Common.Exceptions;
 using Gym_Platform_V1.data.DTOs.Subscription;
 using Gym_Platform_V1.enums;
+using Gym_Platform_V1.ex;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 

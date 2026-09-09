@@ -16,10 +16,8 @@ namespace Gym_Platform_V1.data.DTOs.Auth
         /// </summary>
         public string? Message { get; set; }
 
-        /// <summary>
-        /// Gets or sets the JWT token (only populated on successful login).
-        /// </summary>
-        public string? Token { get; set; }
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         /// <summary>
         /// Gets or sets the logged-in Admin information (only populated on successful login).

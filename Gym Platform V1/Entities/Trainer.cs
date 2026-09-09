@@ -17,6 +17,8 @@ namespace Gym_Management_System.Entities
         public DateTime CreatedAt { get; set; }
         public int GymId { get; set; }
         public Gym? Gym { get; set; }
-        public ICollection<Member> Members { get; set; }    
+        public ICollection<Member>? Members { get; set; }    
+        public int? UserId { get; set; }
+        public Gym_Platform_V1.Entities.User? User { get; set; }
     }
 }

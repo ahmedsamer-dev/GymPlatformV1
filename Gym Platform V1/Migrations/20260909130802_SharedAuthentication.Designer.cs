@@ -4,6 +4,7 @@ using Gym_Management_System.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gym_Platform_V1.Migrations
 {
     [DbContext(typeof(GymPlatformDbContext))]
-    partial class GymPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909130802_SharedAuthentication")]
+    partial class SharedAuthentication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

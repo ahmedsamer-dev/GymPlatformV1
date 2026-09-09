@@ -71,5 +71,8 @@ namespace Gym_Management_System.Entities
         /// A GymOwner can own multiple gyms.
         /// </summary>
         public ICollection<Gym> Gyms { get; set; } = new List<Gym>();
+
+        public int? UserId { get; set; }
+        public Gym_Platform_V1.Entities.User? User { get; set; }
     }
 }

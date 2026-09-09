@@ -142,7 +142,15 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     PasswordHash = application.PasswordHash,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
-                    
+                    ,User = new Gym_Platform_V1.Entities.User
+                    {
+                        UserName = application.UserName,
+                        Email = application.Email,
+                        FullName = application.FullName,
+                        PasswordHash = application.PasswordHash,
+                        Role = "GymOwner",
+                        IsActive = true
+                    }
                 };
 
                 _dbContext.GymOwners.Add(gymOwner);

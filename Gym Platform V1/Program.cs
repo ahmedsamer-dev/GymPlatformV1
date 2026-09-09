@@ -53,6 +53,7 @@ builder.Services
         };
     });
 builder.Services.Configure<Jwtoptions>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<RefreshTokenOptions>(builder.Configuration.GetSection("RefreshToken"));
 
 // ============================================
 // AUTHORIZATION CONFIGURATION
@@ -83,6 +84,7 @@ builder.Services.AddCors(options =>
 // DEPENDENCY INJECTION
 // ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthSessionService, AuthSessionService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
 builder.Services.AddScoped<ITrainerAuthService, TrainerAuthService>();
 builder.Services.AddScoped<IGymOwnerService, GymOwnerService>();

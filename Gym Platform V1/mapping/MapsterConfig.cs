@@ -50,5 +50,9 @@ public static class MapsterConfig
             .Map(dest => dest.MemberName, src => src.Member == null ? null : src.Member.FullName)
             .Map(dest => dest.MembershipPlanName,
                 src => src.MembershipPlan == null ? null : src.MembershipPlan.Name);
+        TypeAdapterConfig<Member, MemberDetailsResponseDto>
+            .NewConfig()
+            .Map(dest => dest.TrainerName, src => src.Trainer == null ? null : src.Trainer.FullName)
+            .Map(dest => dest.GymName, src => src.Gym == null ? null : src.Gym.Name);
     }
 }

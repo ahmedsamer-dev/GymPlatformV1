@@ -66,6 +66,12 @@ namespace Gym_Management_System.Configurations
                    .WithOne(member => member.Trainer)
                    .HasForeignKey(member => member.TrainerId)
                    .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne(t => t.User)
+                .WithOne(u => u.Trainer)
+                .HasForeignKey<Trainer>(t => t.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.HasIndex(t => t.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
         }
     }
 }

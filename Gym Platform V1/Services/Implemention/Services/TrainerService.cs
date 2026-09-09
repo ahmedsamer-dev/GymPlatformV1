@@ -1,8 +1,8 @@
 using Gym_Management_System.Contexts;
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.Common.Exceptions;
 using Gym_Platform_V1.data.DTOs.Trainer;
+using Gym_Platform_V1.ex;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -87,7 +87,15 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 HireDate = request.HireDate,
                 GymId = gym.Id,
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                User = new Gym_Platform_V1.Entities.User
+                {
+                    UserName = request.UserName,
+                    FullName = request.FullName,
+                    PasswordHash = hashedPassword,
+                    Role = "Trainer",
+                    IsActive = true
+                }
             };
 
             _dbContext.Trainers.Add(trainer);

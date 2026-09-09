@@ -51,6 +51,12 @@ namespace Gym_Platform_V1.Configurations
             builder.Property(a => a.IsActive)
                 .IsRequired()
                 .HasDefaultValue(true);
+
+            builder.HasOne(a => a.User)
+                .WithOne(u => u.Admin)
+                .HasForeignKey<Admin>(a => a.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.HasIndex(a => a.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
         }
     }
 }

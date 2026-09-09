@@ -16,17 +16,20 @@ namespace Gym_Platform_V1.Controllers
         private readonly IAdminAuthService _adminAuthService;
         private readonly IGymOwnerAuthService _gymOwnerAuthService;
         private readonly ITrainerAuthService _trainerAuthService;
+        private readonly IAuthSessionService _authSessionService;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IAdminAuthService adminAuthService,
             IGymOwnerAuthService gymOwnerAuthService,
             ITrainerAuthService trainerAuthService,
+            IAuthSessionService authSessionService,
             ILogger<AuthController> logger)
         {
             _adminAuthService = adminAuthService ?? throw new ArgumentNullException(nameof(adminAuthService));
             _gymOwnerAuthService = gymOwnerAuthService ?? throw new ArgumentNullException(nameof(gymOwnerAuthService));
             _trainerAuthService = trainerAuthService ?? throw new ArgumentNullException(nameof(trainerAuthService));
+            _authSessionService = authSessionService ?? throw new ArgumentNullException(nameof(authSessionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -132,6 +135,25 @@ namespace Gym_Platform_V1.Controllers
                     traceId = HttpContext.TraceIdentifier
                 });
             }
+
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
+        {
+            var result = await _authSessionService.RotateAsync(request?.RefreshToken ?? string.Empty);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid refresh token" });
+            return Ok(result);
+        }
+
+        [HttpPost("revoke")]
+        public async Task<IActionResult> Revoke([FromBody] RefreshTokenRequestDto request)
+        {
+            var revoked = await _authSessionService.RevokeAsync(request?.RefreshToken ?? string.Empty);
+            if (!revoked)
+                return Unauthorized(new { message = "Invalid refresh token" });
+            return NoContent();
         }
     }
 }

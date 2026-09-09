@@ -29,6 +29,8 @@ namespace Gym_Management_System.Contexts
         /// Admin users who manage the system.
         /// </summary>
         public DbSet<Admin> Admins { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         // ============================================
         // GYM OWNER APPLICATION & ONBOARDING

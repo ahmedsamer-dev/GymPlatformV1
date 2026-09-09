@@ -19,5 +19,8 @@
         public DateTime CreatedAt { get; set; }
 
         public DateTime? LastLoginAt { get; set; }
+
+        public int? UserId { get; set; }
+        public User? User { get; set; }
     }
 }

@@ -8,13 +8,13 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
     public class GymOwnerAuthService : IGymOwnerAuthService
     {
         private readonly GymPlatformDbContext _dbContext;
-        private readonly ITokenService _tokenService;
+        private readonly IAuthSessionService _authSessionService;
         private readonly ILogger<GymOwnerAuthService> _logger;
 
-        public GymOwnerAuthService(GymPlatformDbContext dbContext, ITokenService tokenService, ILogger<GymOwnerAuthService> logger)
+        public GymOwnerAuthService(GymPlatformDbContext dbContext, IAuthSessionService authSessionService, ILogger<GymOwnerAuthService> logger)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _authSessionService = authSessionService ?? throw new ArgumentNullException(nameof(authSessionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -31,7 +31,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     };
                 }
 
-                var owner = await _dbContext.GymOwners.FirstOrDefaultAsync(g => g.UserName == request.UserName);
+                var owner = await _dbContext.GymOwners.Include(g => g.User).FirstOrDefaultAsync(g => g.UserName == request.UserName);
 
                 if (owner == null)
                 {
@@ -51,7 +51,10 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     return new GymOwnerLoginResponseDto { Success = false, Message = "Invalid username or password" };
                 }
 
-                var token = _tokenService.GenerateToken(owner);
+                if (owner.User == null || !owner.User.IsActive)
+                    return new GymOwnerLoginResponseDto { Success = false, Message = "GymOwner account is inactive" };
+
+                var tokens = await _authSessionService.IssueAsync(owner.User, owner.Id, owner.FullName, owner.Email);
 
                 _logger.LogInformation("GymOwner logged in successfully: {OwnerId}", owner.Id);
 
@@ -59,7 +62,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 {
                     Success = true,
                     Message = "Login successful",
-                    Token = token,
+                    AccessToken = tokens.AccessToken,
+                    RefreshToken = tokens.RefreshToken,
                     Owner = new GymOwnerLoginResponseDto.GymOwnerInfo
                     {
                         Id = owner.Id,

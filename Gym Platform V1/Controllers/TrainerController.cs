@@ -1,8 +1,8 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
-using Gym_Platform_V1.Common.Exceptions;
 using Gym_Platform_V1.data.DTOs.Member;
 using Gym_Platform_V1.data.DTOs.MembershipPlan;
 using Gym_Platform_V1.data.DTOs.Subscription;
+using Gym_Platform_V1.ex;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

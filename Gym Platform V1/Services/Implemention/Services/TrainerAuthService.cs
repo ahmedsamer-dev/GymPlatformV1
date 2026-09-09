@@ -12,13 +12,13 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
     public class TrainerAuthService : ITrainerAuthService
     {
         private readonly GymPlatformDbContext _dbContext;
-        private readonly ITokenService _tokenService;
+        private readonly IAuthSessionService _authSessionService;
         private readonly ILogger<TrainerAuthService> _logger;
 
-        public TrainerAuthService(GymPlatformDbContext dbContext, ITokenService tokenService, ILogger<TrainerAuthService> logger)
+        public TrainerAuthService(GymPlatformDbContext dbContext, IAuthSessionService authSessionService, ILogger<TrainerAuthService> logger)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _authSessionService = authSessionService ?? throw new ArgumentNullException(nameof(authSessionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -44,6 +44,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
                 // Find Trainer by username
                 var trainer = await _dbContext.Trainers
+                    .Include(t => t.User)
                     .FirstOrDefaultAsync(t => t.UserName == request.UserName);
 
                 if (trainer == null)
@@ -78,8 +79,10 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     };
                 }
 
-                // Generate JWT token
-                var token = _tokenService.GenerateToken(trainer);
+                if (trainer.User == null || !trainer.User.IsActive)
+                    return new TrainerLoginResponseDto { Success = false, Message = "Trainer account is inactive" };
+
+                var tokens = await _authSessionService.IssueAsync(trainer.User, trainer.Id, trainer.FullName, null, trainer.GymId);
 
                 _logger.LogInformation("Trainer logged in successfully: {TrainerId}", trainer.Id);
 
@@ -87,7 +90,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 {
                     Success = true,
                     Message = "Login successful",
-                    Token = token,
+                    AccessToken = tokens.AccessToken,
+                    RefreshToken = tokens.RefreshToken,
                     Trainer = new TrainerLoginResponseDto.TrainerInfo
                     {
                         Id = trainer.Id,

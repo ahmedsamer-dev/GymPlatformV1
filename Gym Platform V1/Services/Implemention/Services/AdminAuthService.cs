@@ -14,12 +14,14 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
     {
         private readonly GymPlatformDbContext _dbContext;
         private readonly ITokenService _tokenService;
+        private readonly IAuthSessionService _authSessionService;
         private readonly ILogger<AdminAuthService> _logger;
 
-        public AdminAuthService(GymPlatformDbContext dbContext, ITokenService tokenService, ILogger<AdminAuthService> logger)
+        public AdminAuthService(GymPlatformDbContext dbContext, ITokenService tokenService, IAuthSessionService authSessionService, ILogger<AdminAuthService> logger)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+            _authSessionService = authSessionService ?? throw new ArgumentNullException(nameof(authSessionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -77,6 +79,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
                 // Find Admin by username
                 var admin = await _dbContext.Admins
+                    .Include(a => a.User)
                     .FirstOrDefaultAsync(a => a.UserName == request.UserName);
 
                 if (admin == null)
@@ -111,8 +114,10 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     };
                 }
 
-                // Generate JWT token
-                var token = _tokenService.GenerateToken(admin);
+                if (admin.User == null || !admin.User.IsActive)
+                    return new AdminLoginResponseDto { Success = false, Message = "Admin account is inactive" };
+
+                var tokens = await _authSessionService.IssueAsync(admin.User, admin.Id, admin.FullName, admin.Email);
 
                 // Update LastLoginAt
                 admin.LastLoginAt = DateTime.UtcNow;
@@ -124,7 +129,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 {
                     Success = true,
                     Message = "Login successful",
-                    Token = token,
+                    AccessToken = tokens.AccessToken,
+                    RefreshToken = tokens.RefreshToken,
                     Admin = new AdminLoginResponseDto.AdminInfo
                     {
                         Id = admin.Id,

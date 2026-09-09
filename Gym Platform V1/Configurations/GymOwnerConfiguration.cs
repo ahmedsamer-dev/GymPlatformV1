@@ -99,6 +99,12 @@ namespace Gym_Management_System.Configurations
             // Index on CreatedAt for sorting by registration date
             builder.HasIndex(g => g.CreatedAt)
                 .HasDatabaseName("IX_GymOwner_CreatedAt");
+
+            builder.HasOne(g => g.User)
+                .WithOne(u => u.GymOwner)
+                .HasForeignKey<GymOwner>(g => g.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.HasIndex(g => g.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
         }
     }
 }
