@@ -26,10 +26,10 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         size={16}
         style={{
           position: 'absolute',
-          left: '10px',
+          left: '12px',
           top: '50%',
           transform: 'translateY(-50%)',
-          color: 'var(--color-neutral-400)',
+          color: 'var(--gm-text-placeholder)',
           pointerEvents: 'none',
         }}
       />
@@ -40,21 +40,21 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         style={{
           width: '100%',
-          padding: '8px 32px 8px 34px',
+          padding: '9px 34px 9px 36px',
           fontSize: 'var(--font-size-base)',
-          color: 'var(--color-text-main)',
-          backgroundColor: 'var(--color-bg-surface)',
-          border: '1px solid var(--color-neutral-300)',
-          borderRadius: 'var(--radius-md)',
+          color: 'var(--gm-text-primary)',
+          backgroundColor: 'var(--gm-surface)',
+          border: '1px solid var(--gm-border)',
+          borderRadius: 'var(--gm-radius-md)',
           outline: 'none',
           transition: `border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease)`,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-primary-500)';
-          e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-100)';
+          e.currentTarget.style.borderColor = 'var(--gm-primary)';
+          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.14)';
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-neutral-300)';
+          e.currentTarget.style.borderColor = 'var(--gm-border)';
           e.currentTarget.style.boxShadow = 'none';
         }}
         aria-label={placeholder}
@@ -74,10 +74,19 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '20px',
-            height: '20px',
-            borderRadius: 'var(--radius-sm)',
-            color: 'var(--color-neutral-400)',
+            width: '22px',
+            height: '22px',
+            borderRadius: 'var(--gm-radius-sm)',
+            color: 'var(--gm-text-muted)',
+            transition: 'all var(--duration-fast) var(--ease)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--gm-surface-soft)';
+            e.currentTarget.style.color = 'var(--gm-text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--gm-text-muted)';
           }}
         >
           <X size={14} />

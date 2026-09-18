@@ -1,4 +1,6 @@
 using Gym_Platform_V1.data.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.Admin.Common;
+using Gym_Platform_V1.data.DTOs.Admin.Owners;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {
@@ -68,5 +70,11 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
         /// </returns>
         Task<GymOwnerDetailsDto?> GetByIdAsync(int id);
         Task<IEnumerable<GymOwnerResponseDto>> GetAllAsync();
+
+        Task<PagedResponseDto<OwnerListResponseDto>> GetPagedForAdminAsync(OwnerListRequestDto request);
+
+        Task<OwnerDetailsResponseDto?> GetDetailsForAdminAsync(int id);
+
+        Task SetOwnerStatusAsync(int ownerId, bool active);
     }
 }

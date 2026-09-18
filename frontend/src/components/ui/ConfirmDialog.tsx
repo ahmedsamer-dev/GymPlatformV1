@@ -29,27 +29,28 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
           <div
             style={{
               width: '40px',
               height: '40px',
-              borderRadius: 'var(--radius-xl)',
-              backgroundColor: variant === 'danger' ? 'var(--color-danger-50)' : 'var(--color-primary-50)',
+              borderRadius: 'var(--gm-radius-lg)',
+              backgroundColor: variant === 'danger' ? 'var(--gm-danger-soft)' : 'var(--gm-primary-soft)',
+              border: variant === 'danger' ? '1px solid var(--gm-danger-border)' : '1px solid var(--gm-primary-border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              color: variant === 'danger' ? 'var(--color-danger-500)' : 'var(--color-primary-500)',
+              color: variant === 'danger' ? 'var(--gm-danger)' : 'var(--gm-primary)',
             }}
           >
-            <AlertTriangle size={20} />
+            <AlertTriangle size={20} strokeWidth={2} />
           </div>
           <p
             style={{
-              fontSize: 'var(--font-size-base)',
-              color: 'var(--color-text-secondary)',
-              lineHeight: 'var(--line-height-relaxed)',
+              fontSize: 'var(--gm-font-size-base)',
+              color: 'var(--gm-text-secondary)',
+              lineHeight: 1.5,
               margin: 0,
             }}
           >
@@ -62,8 +63,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '8px',
-            paddingTop: '8px',
-            borderTop: '1px solid var(--color-border)',
+            paddingTop: '12px',
+            borderTop: '1px solid var(--gm-border)',
           }}
         >
           <Button variant="ghost" size="sm" onClick={onClose} disabled={isLoading}>

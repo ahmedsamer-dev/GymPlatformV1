@@ -2,13 +2,13 @@ import React from 'react';
 import { CheckCircle2, User, Building2, Calendar } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
-import type { GymOwnerApplication } from '../../../types/shared';
+import type { ApplicationModalData } from '../../../types/admin';
 
 interface ApproveApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  application: GymOwnerApplication | null;
+  application: ApplicationModalData | null;
   isLoading: boolean;
 }
 
@@ -30,23 +30,24 @@ export const ApproveApplicationModal: React.FC<ApproveApplicationModalProps> = (
             style={{
               width: '44px',
               height: '44px',
-              borderRadius: 'var(--radius-xl)',
-              backgroundColor: 'var(--color-success-50)',
-              color: 'var(--color-success-600)',
+              borderRadius: 'var(--gm-radius-lg)',
+              backgroundColor: 'var(--gm-success-soft)',
+              border: '1px solid var(--gm-success-border)',
+              color: 'var(--gm-success)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            <CheckCircle2 size={24} />
+            <CheckCircle2 size={24} strokeWidth={2} />
           </div>
           <div>
             <h4
               style={{
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-                color: 'var(--color-text-main)',
+                fontSize: 'var(--gm-font-size-base)',
+                fontWeight: 700,
+                color: 'var(--gm-text-primary)',
                 margin: 0,
               }}
             >
@@ -54,9 +55,9 @@ export const ApproveApplicationModal: React.FC<ApproveApplicationModalProps> = (
             </h4>
             <p
               style={{
-                fontSize: 'var(--font-size-sm)',
-                color: 'var(--color-text-secondary)',
-                lineHeight: 'var(--line-height-relaxed)',
+                fontSize: 'var(--gm-font-size-sm)',
+                color: 'var(--gm-text-secondary)',
+                lineHeight: 1.5,
                 margin: '4px 0 0 0',
               }}
             >
@@ -68,33 +69,35 @@ export const ApproveApplicationModal: React.FC<ApproveApplicationModalProps> = (
         {/* Application Summary Box */}
         <div
           style={{
-            backgroundColor: 'var(--color-neutral-50)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-lg)',
+            backgroundColor: 'var(--gm-surface-soft)',
+            border: '1px solid var(--gm-border)',
+            borderRadius: 'var(--gm-radius-lg)',
             padding: '16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
-            fontSize: 'var(--font-size-sm)',
+            gap: '12px',
+            fontSize: 'var(--gm-font-size-sm)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-main)' }}>
-            <Building2 size={16} style={{ color: 'var(--color-primary-500)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gm-text-primary)' }}>
+            <Building2 size={16} strokeWidth={2} style={{ color: 'var(--gm-primary)', flexShrink: 0 }} />
             <span style={{ fontWeight: 600 }}>{application.gymName}</span>
-            <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-              ({application.gymAddress})
-            </span>
+            {application.gymAddress && (
+              <span style={{ color: 'var(--gm-text-muted)', fontSize: 'var(--gm-font-size-xs)' }}>
+                ({application.gymAddress})
+              </span>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-secondary)' }}>
-            <User size={16} style={{ color: 'var(--color-neutral-400)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gm-text-secondary)' }}>
+            <User size={16} strokeWidth={2} style={{ color: 'var(--gm-text-muted)', flexShrink: 0 }} />
             <span>
               <strong>{application.fullName}</strong> (@{application.userName}) · {application.email}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-muted)' }}>
-            <Calendar size={16} style={{ color: 'var(--color-neutral-400)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gm-text-muted)' }}>
+            <Calendar size={16} strokeWidth={2} style={{ color: 'var(--gm-text-muted)', flexShrink: 0 }} />
             <span>
               Submitted on {new Date(application.createdAt).toLocaleDateString(undefined, {
                 year: 'numeric',
@@ -111,8 +114,8 @@ export const ApproveApplicationModal: React.FC<ApproveApplicationModalProps> = (
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '8px',
-            paddingTop: '12px',
-            borderTop: '1px solid var(--color-border)',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--gm-border)',
           }}
         >
           <Button variant="secondary" size="md" onClick={onClose} disabled={isLoading}>

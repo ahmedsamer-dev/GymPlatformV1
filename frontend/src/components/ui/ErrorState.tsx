@@ -20,47 +20,49 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 24px',
+        padding: '52px 24px',
         textAlign: 'center',
       }}
     >
       <div
         style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: 'var(--radius-xl)',
-          backgroundColor: 'var(--color-danger-50)',
+          width: '52px',
+          height: '52px',
+          borderRadius: 'var(--gm-radius-xl)',
+          backgroundColor: 'var(--gm-danger-soft)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '16px',
-          color: 'var(--color-danger-500)',
+          color: 'var(--gm-danger)',
         }}
       >
-        <AlertTriangle size={22} />
+        <AlertTriangle size={24} strokeWidth={2} />
       </div>
       <h3
         style={{
-          fontSize: 'var(--font-size-base)',
-          fontWeight: 600,
-          color: 'var(--color-text-main)',
+          fontSize: '1.1875rem',
+          fontWeight: 700,
+          color: 'var(--gm-text-primary)',
           margin: 0,
+          letterSpacing: '-0.02em',
         }}
       >
         {title}
       </h3>
       <p
         style={{
-          fontSize: 'var(--font-size-sm)',
-          color: 'var(--color-text-muted)',
-          marginTop: '4px',
-          maxWidth: '320px',
+          fontSize: 'var(--font-size-base)',
+          color: 'var(--gm-text-secondary)',
+          marginTop: '6px',
+          maxWidth: '380px',
+          lineHeight: 'var(--line-height-relaxed)',
         }}
       >
         {message}
       </p>
       {onRetry && (
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '18px' }}>
           <Button variant="secondary" size="sm" onClick={onRetry}>
             Try Again
           </Button>

@@ -42,9 +42,12 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     };
                 }
 
-                // Find Trainer by username
+                // Load the ownership chain explicitly so inactive Gym/GymOwner states
+                // are checked reliably before issuing tokens.
                 var trainer = await _dbContext.Trainers
                     .Include(t => t.User)
+                    .Include(t => t.Gym)
+                        .ThenInclude(g => g!.GymOwner)
                     .FirstOrDefaultAsync(t => t.UserName == request.UserName);
 
                 if (trainer == null)
@@ -57,6 +60,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                     };
                 }
 
+                if (trainer.User == null || !trainer.User.IsActive)
+                    return new TrainerLoginResponseDto { Success = false, Message = "Trainer account is inactive" };
+
                 // Check if Trainer is active
                 if (!trainer.IsActive)
                 {
@@ -66,6 +72,18 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                         Success = false,
                         Message = "Trainer account is inactive"
                     };
+                }
+
+                if (trainer.Gym == null || !trainer.Gym.IsActive)
+                {
+                    _logger.LogWarning("Login attempt for Trainer {TrainerId} in inactive Gym {GymId}", trainer.Id, trainer.GymId);
+                    return new TrainerLoginResponseDto { Success = false, Message = "Your gym is inactive." };
+                }
+
+                if (trainer.Gym.GymOwner == null || !trainer.Gym.GymOwner.IsActive)
+                {
+                    _logger.LogWarning("Login attempt for Trainer {TrainerId} in Gym {GymId} with inactive GymOwner", trainer.Id, trainer.GymId);
+                    return new TrainerLoginResponseDto { Success = false, Message = "Your gym owner's account is inactive." };
                 }
 
                 // Verify password - Compare password hash with input
@@ -78,9 +96,6 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                         Message = "Invalid username or password"
                     };
                 }
-
-                if (trainer.User == null || !trainer.User.IsActive)
-                    return new TrainerLoginResponseDto { Success = false, Message = "Trainer account is inactive" };
 
                 var tokens = await _authSessionService.IssueAsync(trainer.User, trainer.Id, trainer.FullName, null, trainer.GymId);
 

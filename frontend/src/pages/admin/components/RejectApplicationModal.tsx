@@ -3,13 +3,13 @@ import { AlertCircle, Building2, User } from 'lucide-react';
 import { Modal } from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { Textarea } from '../../../components/ui/Textarea';
-import type { GymOwnerApplication } from '../../../types/shared';
+import type { ApplicationModalData } from '../../../types/admin';
 
 interface RejectApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
-  application: GymOwnerApplication | null;
+  application: ApplicationModalData | null;
   isLoading: boolean;
 }
 
@@ -77,28 +77,29 @@ export const RejectApplicationModal: React.FC<RejectApplicationModalProps> = ({
     <Modal isOpen={isOpen} onClose={handleClose} title="Reject Application" size="md">
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {/* Intro */}
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: 'var(--radius-xl)',
-              backgroundColor: 'var(--color-danger-50)',
-              color: 'var(--color-danger-500)',
+              width: '44px',
+              height: '44px',
+              borderRadius: 'var(--gm-radius-lg)',
+              backgroundColor: 'var(--gm-danger-soft)',
+              border: '1px solid var(--gm-danger-border)',
+              color: 'var(--gm-danger)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            <AlertCircle size={22} />
+            <AlertCircle size={22} strokeWidth={2} />
           </div>
           <div>
             <h4
               style={{
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 600,
-                color: 'var(--color-text-main)',
+                fontSize: 'var(--gm-font-size-base)',
+                fontWeight: 700,
+                color: 'var(--gm-text-primary)',
                 margin: 0,
               }}
             >
@@ -106,9 +107,9 @@ export const RejectApplicationModal: React.FC<RejectApplicationModalProps> = ({
             </h4>
             <p
               style={{
-                fontSize: 'var(--font-size-sm)',
-                color: 'var(--color-text-secondary)',
-                lineHeight: 'var(--line-height-relaxed)',
+                fontSize: 'var(--gm-font-size-sm)',
+                color: 'var(--gm-text-secondary)',
+                lineHeight: 1.5,
                 margin: '4px 0 0 0',
               }}
             >
@@ -120,23 +121,23 @@ export const RejectApplicationModal: React.FC<RejectApplicationModalProps> = ({
         {/* Application context snippet */}
         <div
           style={{
-            backgroundColor: 'var(--color-neutral-50)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px 14px',
+            backgroundColor: 'var(--gm-surface-soft)',
+            border: '1px solid var(--gm-border)',
+            borderRadius: 'var(--gm-radius-lg)',
+            padding: '12px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: 'var(--font-size-sm)',
+            fontSize: 'var(--gm-font-size-sm)',
             gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-main)' }}>
-            <Building2 size={16} style={{ color: 'var(--color-neutral-400)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gm-text-primary)' }}>
+            <Building2 size={16} strokeWidth={2} style={{ color: 'var(--gm-text-muted)' }} />
             <span style={{ fontWeight: 600 }}>{application.gymName}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary)' }}>
-            <User size={16} style={{ color: 'var(--color-neutral-400)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gm-text-secondary)' }}>
+            <User size={16} strokeWidth={2} style={{ color: 'var(--gm-text-muted)' }} />
             <span>{application.fullName}</span>
           </div>
         </div>
@@ -163,8 +164,8 @@ export const RejectApplicationModal: React.FC<RejectApplicationModalProps> = ({
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '8px',
-            paddingTop: '12px',
-            borderTop: '1px solid var(--color-border)',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--gm-border)',
           }}
         >
           <Button type="button" variant="secondary" size="md" onClick={handleClose} disabled={isLoading}>

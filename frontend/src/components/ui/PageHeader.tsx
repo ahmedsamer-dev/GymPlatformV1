@@ -14,18 +14,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, description, acti
         flexWrap: 'wrap',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
-        gap: '12px',
-        marginBottom: 'var(--sp-6)',
+        gap: '16px',
+        marginBottom: 'var(--gm-space-6)',
       }}
     >
       <div>
         <h1
           style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: 600,
-            color: 'var(--color-text-main)',
+            fontSize: 'var(--gm-font-size-2xl)',
+            fontWeight: 700,
+            color: 'var(--gm-text-primary)',
             margin: 0,
-            lineHeight: 'var(--line-height-tight)',
+            lineHeight: 1.25,
+            letterSpacing: '-0.025em',
           }}
         >
           {title}
@@ -33,9 +34,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, description, acti
         {description && (
           <p
             style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-text-muted)',
+              fontSize: 'var(--gm-font-size-sm)',
+              color: 'var(--gm-text-secondary)',
               marginTop: '4px',
+              lineHeight: 1.5,
             }}
           >
             {description}

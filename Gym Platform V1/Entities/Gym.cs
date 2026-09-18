@@ -39,6 +39,8 @@ namespace Gym_Management_System.Entities
         /// </summary>
         public DateTime CreatedAt { get; set; }
 
+        public bool IsActive { get; set; }
+
         // ============================================
         // FOREIGN KEY AND NAVIGATION PROPERTY
         // ============================================

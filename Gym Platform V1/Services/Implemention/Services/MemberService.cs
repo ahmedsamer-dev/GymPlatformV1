@@ -46,6 +46,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var trainer = await _context.Trainers
                 .AsNoTracking()
                 .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -60,6 +61,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Attempt to create Member for inactive Trainer: {TrainerId}", trainerId);
                 throw new InvalidOperationException("Cannot create Member for an inactive Trainer.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym or GymOwner account.");
 
             // Duplicate phone check — scoped to the Trainer's Gym to match the existing
             // unique index on (GymId, PhoneNumber). Enforced here for a friendly error;
@@ -261,6 +265,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var trainer = await _context.Trainers
                 .AsNoTracking()
                 .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -274,6 +279,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Attempt to update Member for inactive Trainer: {TrainerId}", trainerId);
                 throw new InvalidOperationException("Cannot update Member for an inactive Trainer.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym or GymOwner account.");
 
             // Load the Member as tracked so the update can be saved
             var member = await _context.Members
@@ -364,6 +372,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // the existing Member business rules used by Create/Update.
             var trainer = await _context.Trainers
                 .AsNoTracking()
+                .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -377,6 +387,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Attempt to retrieve Members for inactive Trainer: {TrainerId}", trainerId);
                 throw new InvalidOperationException("Cannot retrieve Members for an inactive Trainer.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym or GymOwner account.");
 
             // Build the query, ALWAYS scoped to the authenticated Trainer.
             var query = _context.Members

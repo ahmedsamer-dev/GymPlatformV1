@@ -93,9 +93,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         ref={contentRef}
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: 'var(--color-bg-surface)',
-          borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-xl)',
+          backgroundColor: 'var(--gm-surface)',
+          borderRadius: 'var(--gm-radius-xl)',
+          border: '1px solid var(--gm-border)',
+          boxShadow: 'var(--gm-shadow-xl)',
           width: '100%',
           maxWidth: sizeMap[size],
           maxHeight: 'calc(100vh - 64px)',
@@ -111,17 +112,18 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 'var(--sp-4) var(--sp-5)',
-            borderBottom: '1px solid var(--color-border)',
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--gm-border)',
             flexShrink: 0,
           }}
         >
           <h2
             style={{
-              fontSize: 'var(--font-size-md)',
-              fontWeight: 600,
-              color: 'var(--color-text-main)',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: 'var(--gm-text-primary)',
               margin: 0,
+              letterSpacing: '-0.02em',
             }}
           >
             {title}
@@ -135,29 +137,30 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
               justifyContent: 'center',
               width: '32px',
               height: '32px',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--color-neutral-400)',
+              borderRadius: 'var(--gm-radius-md)',
+              color: 'var(--gm-text-muted)',
               transition: `all var(--duration-fast) var(--ease)`,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-neutral-100)';
-              e.currentTarget.style.color = 'var(--color-neutral-600)';
+              e.currentTarget.style.backgroundColor = 'var(--gm-surface-soft)';
+              e.currentTarget.style.color = 'var(--gm-text-primary)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--color-neutral-400)';
+              e.currentTarget.style.color = 'var(--gm-text-muted)';
             }}
           >
-            <X size={18} />
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
 
         {/* Body */}
         <div
           style={{
-            padding: 'var(--sp-5)',
+            padding: '20px',
             overflowY: 'auto',
             flex: 1,
+            fontSize: 'var(--font-size-base)',
           }}
         >
           {children}

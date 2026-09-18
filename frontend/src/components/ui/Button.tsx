@@ -12,7 +12,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontWeight: 500,
+    fontWeight: 600,
+    letterSpacing: '-0.01em',
     borderRadius: 'var(--radius-md)',
     transition: `all var(--duration-base) var(--ease)`,
     cursor: 'pointer',
@@ -25,36 +26,40 @@ const styles: Record<string, React.CSSProperties> = {
 
 const variantMap: Record<string, React.CSSProperties> = {
   primary: {
-    backgroundColor: 'var(--color-primary-600)',
-    color: '#fff',
-    borderColor: 'var(--color-primary-600)',
+    backgroundColor: 'var(--gm-primary)',
+    color: '#ffffff',
+    borderColor: 'var(--gm-primary)',
+    boxShadow: 'var(--gm-shadow-xs)',
   },
   secondary: {
-    backgroundColor: 'var(--color-bg-surface)',
-    color: 'var(--color-neutral-700)',
-    borderColor: 'var(--color-border-strong)',
+    backgroundColor: 'var(--gm-surface)',
+    color: 'var(--gm-text-primary)',
+    borderColor: 'var(--gm-border)',
+    boxShadow: 'var(--gm-shadow-xs)',
   },
   danger: {
-    backgroundColor: 'var(--color-danger-600)',
-    color: '#fff',
-    borderColor: 'var(--color-danger-600)',
+    backgroundColor: 'var(--gm-danger)',
+    color: '#ffffff',
+    borderColor: 'var(--gm-danger)',
+    boxShadow: 'var(--gm-shadow-xs)',
   },
   ghost: {
     backgroundColor: 'transparent',
-    color: 'var(--color-neutral-600)',
+    color: 'var(--gm-text-secondary)',
     borderColor: 'transparent',
   },
   success: {
-    backgroundColor: 'var(--color-success-600)',
-    color: '#fff',
-    borderColor: 'var(--color-success-600)',
+    backgroundColor: 'var(--gm-success)',
+    color: '#ffffff',
+    borderColor: 'var(--gm-success)',
+    boxShadow: 'var(--gm-shadow-xs)',
   },
 };
 
 const sizeMap: Record<string, React.CSSProperties> = {
-  sm: { padding: '6px 12px', fontSize: 'var(--font-size-sm)', gap: '6px' },
-  md: { padding: '8px 16px', fontSize: 'var(--font-size-base)', gap: '6px' },
-  lg: { padding: '10px 20px', fontSize: 'var(--font-size-md)', gap: '8px' },
+  sm: { padding: '6px 12px', fontSize: 'var(--gm-text-sm)', gap: '6px' },
+  md: { padding: '8px 16px', fontSize: 'var(--font-size-base)', gap: '7px' },
+  lg: { padding: '10px 22px', fontSize: 'var(--gm-text-lg)', gap: '8px' },
 };
 
 const Loader: React.FC = () => (
@@ -91,15 +96,28 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         onMouseEnter={(e) => {
           if (isDisabled) return;
           const t = e.currentTarget;
-          if (variant === 'primary') t.style.backgroundColor = 'var(--color-primary-700)';
-          else if (variant === 'secondary') t.style.backgroundColor = 'var(--color-neutral-50)';
-          else if (variant === 'danger') t.style.backgroundColor = 'var(--color-danger-700)';
-          else if (variant === 'ghost') t.style.backgroundColor = 'var(--color-neutral-100)';
-          else if (variant === 'success') t.style.backgroundColor = 'var(--color-success-700)';
+          if (variant === 'primary') {
+            t.style.backgroundColor = 'var(--gm-primary-hover)';
+            t.style.borderColor = 'var(--gm-primary-hover)';
+          } else if (variant === 'secondary') {
+            t.style.backgroundColor = 'var(--gm-surface-soft)';
+            t.style.borderColor = 'var(--gm-border-hover)';
+          } else if (variant === 'danger') {
+            t.style.backgroundColor = 'var(--gm-danger-dark)';
+            t.style.borderColor = 'var(--gm-danger-dark)';
+          } else if (variant === 'ghost') {
+            t.style.backgroundColor = 'var(--gm-surface-soft)';
+          } else if (variant === 'success') {
+            t.style.backgroundColor = 'var(--gm-success-dark)';
+            t.style.borderColor = 'var(--gm-success-dark)';
+          }
+          if (variant !== 'ghost') t.style.transform = 'translateY(-1px)';
         }}
         onMouseLeave={(e) => {
           const t = e.currentTarget;
           t.style.backgroundColor = variantMap[variant].backgroundColor as string;
+          t.style.borderColor = variantMap[variant].borderColor as string;
+          t.style.transform = '';
         }}
         {...props}
       >

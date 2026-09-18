@@ -43,6 +43,11 @@ namespace Gym_Platform_V1.Migrations
                     b.Property<int>("GymOwnerID")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -56,6 +61,9 @@ namespace Gym_Platform_V1.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GymOwnerID");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_Gym_IsActive");
 
                     b.ToTable("Gyms");
                 });

@@ -44,7 +44,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(g =>
                     g.Id == request.GymId &&
-                    g.GymOwnerID == ownerId);
+                    g.GymOwnerID == ownerId &&
+                    g.IsActive &&
+                    g.GymOwner!.IsActive);
 
             if (gym == null)
             {
@@ -134,7 +136,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Authorized Gyms are resolved from the JWT owner id — not from the client.
             var gymIds = await _dbContext.Gyms
                 .AsNoTracking()
-                .Where(g => g.GymOwnerID == ownerId)
+                .Where(g => g.GymOwnerID == ownerId && g.IsActive && g.GymOwner!.IsActive)
                 .Select(g => g.Id)
                 .ToListAsync();
 
@@ -182,6 +184,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Trainer not found: {TrainerId}", trainerId);
                 throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
             }
+
+            if (!trainer.IsActive || !await _dbContext.Gyms.AnyAsync(g => g.Id == trainer.GymId && g.IsActive && g.GymOwner!.IsActive))
+                throw new InvalidOperationException("Trainer account or Gym is inactive.");
 
             // Direct projection in the database; no full entities or Includes loaded.
             var plans = await _dbContext.MembershipPlans

@@ -9,6 +9,7 @@ import { publicApi } from '../../api/public.api';
 import { gymOwnerApplicationSchema } from '../../schemas';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { BrandLogo } from '../../components/brand/BrandLogo';
 
 type ApplicationFormValues = z.infer<typeof gymOwnerApplicationSchema>;
 
@@ -51,58 +52,61 @@ export const ApplyPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 'var(--sp-6)',
+          padding: '32px 24px',
+          backgroundColor: 'var(--gm-bg)',
         }}
       >
         <div
           style={{
-            maxWidth: '420px',
+            maxWidth: '440px',
             width: '100%',
             textAlign: 'center',
-            backgroundColor: 'var(--color-bg-surface)',
-            borderRadius: 'var(--radius-xl)',
-            border: '1px solid var(--color-border)',
-            boxShadow: 'var(--shadow-md)',
-            padding: 'var(--sp-8)',
-            animation: 'slide-up var(--duration-slow) var(--ease)',
+            backgroundColor: 'var(--gm-surface)',
+            borderRadius: 'var(--gm-radius-xl)',
+            border: '1px solid var(--gm-border)',
+            boxShadow: 'var(--gm-shadow-md)',
+            padding: '36px 32px',
+            animation: 'slide-up var(--gm-transition-normal)',
           }}
         >
           <div
             style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-success-50)',
+              width: '60px',
+              height: '60px',
+              borderRadius: 'var(--gm-radius-full)',
+              backgroundColor: 'var(--gm-success-soft)',
+              border: '1px solid var(--gm-success-border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 20px',
             }}
           >
-            <CheckCircle2 size={28} style={{ color: 'var(--color-success-600)' }} />
+            <CheckCircle2 size={30} strokeWidth={2} style={{ color: 'var(--gm-success)' }} />
           </div>
           <h2
             style={{
-              fontSize: 'var(--font-size-xl)',
-              fontWeight: 600,
-              color: 'var(--color-text-main)',
-              marginBottom: '8px',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: 'var(--gm-text-primary)',
+              letterSpacing: '-0.025em',
+              marginBottom: '10px',
             }}
           >
             Application Submitted
           </h2>
           <p
             style={{
-              fontSize: 'var(--font-size-base)',
-              color: 'var(--color-text-muted)',
-              lineHeight: 'var(--line-height-relaxed)',
-              marginBottom: '24px',
+              fontSize: 'var(--gm-font-size-base)',
+              color: 'var(--gm-text-secondary)',
+              lineHeight: 1.55,
+              marginBottom: '28px',
             }}
           >
             Thank you for applying. Our admin team will review your application and contact you soon.
           </p>
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <Button style={{ width: '100%' }}>Return Home</Button>
+            <Button size="lg" style={{ width: '100%' }}>Return Home</Button>
           </Link>
         </div>
       </div>
@@ -117,53 +121,63 @@ export const ApplyPage: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         padding: '40px 24px',
-        backgroundColor: 'var(--color-bg-base)',
+        backgroundColor: 'var(--gm-bg)',
       }}
     >
-      <div style={{ maxWidth: '600px', width: '100%' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h1
-            style={{
-              fontSize: 'var(--font-size-2xl)',
-              fontWeight: 600,
-              color: 'var(--color-text-main)',
-              marginBottom: '6px',
-            }}
-          >
-            Apply for Gym Ownership
-          </h1>
-          <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-muted)' }}>
-            Fill out the details below to start managing your gym on GymMaster.
-          </p>
-        </div>
-
-        {/* Form Card */}
+      <div style={{ maxWidth: '640px', width: '100%' }}>
+        {/* Form Card — mirrors the Login card */}
         <div
           style={{
-            backgroundColor: 'var(--color-bg-surface)',
-            borderRadius: 'var(--radius-xl)',
-            border: '1px solid var(--color-border)',
-            boxShadow: 'var(--shadow-sm)',
-            padding: 'var(--sp-6)',
-            animation: 'slide-up var(--duration-slow) var(--ease)',
+            backgroundColor: 'var(--gm-surface)',
+            borderRadius: 'var(--gm-radius-xl)',
+            border: '1px solid var(--gm-border)',
+            boxShadow: 'var(--gm-shadow-md)',
+            padding: '36px 32px',
+            animation: 'slide-up var(--gm-transition-normal)',
           }}
         >
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <BrandLogo size={48} />
+            </div>
+            <h1
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: 'var(--gm-text-primary)',
+                letterSpacing: '-0.025em',
+                margin: 0,
+              }}
+            >
+              Become a Gym Owner
+            </h1>
+            <p
+              style={{
+                fontSize: 'var(--gm-font-size-sm)',
+                color: 'var(--gm-text-secondary)',
+                marginTop: '6px',
+              }}
+            >
+              Apply to manage your gym with GymMaster.
+            </p>
+          </div>
+
           {serverError && (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '10px 12px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--color-danger-50)',
-                border: '1px solid var(--color-danger-200)',
+                gap: '10px',
+                padding: '12px 14px',
+                borderRadius: 'var(--gm-radius-md)',
+                backgroundColor: 'var(--gm-danger-soft)',
+                border: '1px solid var(--gm-danger-border)',
                 marginBottom: '20px',
               }}
             >
-              <AlertCircle size={16} style={{ color: 'var(--color-danger-600)', flexShrink: 0 }} />
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-danger-700)', margin: 0 }}>
+              <AlertCircle size={18} strokeWidth={2} style={{ color: 'var(--gm-danger)', flexShrink: 0 }} />
+              <p style={{ fontSize: 'var(--gm-font-size-sm)', fontWeight: 500, color: 'var(--gm-danger)', margin: 0, lineHeight: 1.4 }}>
                 {serverError}
               </p>
             </div>
@@ -174,12 +188,12 @@ export const ApplyPage: React.FC = () => {
             <fieldset style={{ border: 'none', padding: 0, margin: 0, marginBottom: '24px' }}>
               <legend
                 style={{
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
+                  fontSize: 'var(--gm-font-size-sm)',
+                  fontWeight: 700,
+                  color: 'var(--gm-text-primary)',
                   marginBottom: '16px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid var(--color-border)',
+                  borderBottom: '1px solid var(--gm-border)',
                   display: 'block',
                   width: '100%',
                 }}
@@ -201,12 +215,12 @@ export const ApplyPage: React.FC = () => {
             <fieldset style={{ border: 'none', padding: 0, margin: 0, marginBottom: '24px' }}>
               <legend
                 style={{
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
+                  fontSize: 'var(--gm-font-size-sm)',
+                  fontWeight: 700,
+                  color: 'var(--gm-text-primary)',
                   marginBottom: '16px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid var(--color-border)',
+                  borderBottom: '1px solid var(--gm-border)',
                   display: 'block',
                   width: '100%',
                 }}
@@ -227,19 +241,36 @@ export const ApplyPage: React.FC = () => {
               style={{
                 display: 'flex',
                 justifyContent: 'flex-end',
-                gap: '8px',
-                paddingTop: '16px',
-                borderTop: '1px solid var(--color-border)',
+                gap: '10px',
+                paddingTop: '20px',
+                borderTop: '1px solid var(--gm-border)',
               }}
             >
               <Link to="/" style={{ textDecoration: 'none' }}>
                 <Button type="button" variant="ghost">Cancel</Button>
               </Link>
-              <Button type="submit" isLoading={mutation.isPending}>
+              <Button type="submit" size="md" isLoading={mutation.isPending}>
                 Submit Application
               </Button>
             </div>
           </form>
+
+          {/* Footer link — mirrors the Login card */}
+          <div
+            style={{
+              marginTop: '24px',
+              paddingTop: '20px',
+              borderTop: '1px solid var(--gm-border)',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: 'var(--gm-font-size-sm)', color: 'var(--gm-text-secondary)', margin: 0 }}>
+              Already have an account?{' '}
+              <Link to="/login" style={{ color: 'var(--gm-primary)', fontWeight: 600, textDecoration: 'none' }}>
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

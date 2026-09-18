@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react';
 
 interface TableProps {
-  headers: string[];
+  headers: React.ReactNode[];
   children: ReactNode;
   emptyMessage?: string;
   isEmpty?: boolean;
@@ -21,21 +21,22 @@ export const Table: React.FC<TableProps> = ({ headers, children, emptyMessage = 
         <thead>
           <tr
             style={{
-              borderBottom: '1px solid var(--color-border)',
-              backgroundColor: 'var(--color-neutral-50)',
+              borderBottom: '1px solid var(--gm-border)',
+              backgroundColor: 'var(--gm-bg)',
             }}
           >
             {headers.map((header, idx) => (
               <th
                 key={idx}
                 style={{
-                  padding: '10px 16px',
-                  fontWeight: 500,
-                  fontSize: 'var(--font-size-sm)',
-                  color: 'var(--color-text-muted)',
+                  padding: '11px 16px',
+                  fontWeight: 600,
+                  fontSize: 'var(--gm-text-xs)',
+                  color: 'var(--gm-text-secondary)',
                   whiteSpace: 'nowrap',
                   lineHeight: 'var(--line-height-normal)',
-                  letterSpacing: '0.01em',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
                 }}
               >
                 {header}
@@ -51,7 +52,7 @@ export const Table: React.FC<TableProps> = ({ headers, children, emptyMessage = 
                 style={{
                   padding: '48px 16px',
                   textAlign: 'center',
-                  color: 'var(--color-text-muted)',
+                  color: 'var(--gm-text-muted)',
                   fontSize: 'var(--font-size-base)',
                 }}
               >
@@ -72,12 +73,12 @@ export const TableRow: React.FC<{ children: ReactNode; onClick?: () => void }> =
     <tr
       onClick={onClick}
       style={{
-        borderBottom: '1px solid var(--color-border)',
+        borderBottom: '1px solid var(--gm-border)',
         transition: `background-color var(--duration-fast) var(--ease)`,
         cursor: onClick ? 'pointer' : undefined,
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-neutral-50)';
+        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--gm-surface-soft)';
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
@@ -93,9 +94,9 @@ export const TableCell: React.FC<{ children: ReactNode; className?: string }> = 
     <td
       className={className}
       style={{
-        padding: '12px 16px',
+        padding: '13px 16px',
         fontSize: 'var(--font-size-base)',
-        color: 'var(--color-text-main)',
+        color: 'var(--gm-text-primary)',
         verticalAlign: 'middle',
       }}
     >

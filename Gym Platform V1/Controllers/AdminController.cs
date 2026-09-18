@@ -1,6 +1,11 @@
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.data.DTOs.GymOwner;
 using Gym_Platform_V1.data.DTOs.GymOwnerApplication;
+using Gym_Platform_V1.data.DTOs.Admin.Applications;
+using Gym_Platform_V1.data.DTOs.Admin.Owners;
+using Gym_Platform_V1.data.DTOs.Admin.Common;
+using Gym_Platform_V1.data.DTOs.Admin.Gyms;
+using Gym_Platform_V1.data.DTOs.Admin.Dashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,16 +24,201 @@ namespace Gym_Platform_V1.Controllers
     {
         private readonly IGymOwnerService _gymOwnerService;
         private readonly IGymOwnerApplicationService _applicationService;
+        private readonly IAdminGymService _adminGymService;
+        private readonly IAdminDashboardService _adminDashboardService;
         private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             IGymOwnerService gymOwnerService,
             IGymOwnerApplicationService applicationService,
+            IAdminGymService adminGymService,
+            IAdminDashboardService adminDashboardService,
             ILogger<AdminController> logger)
         {
             _gymOwnerService = gymOwnerService ?? throw new ArgumentNullException(nameof(gymOwnerService));
             _applicationService = applicationService ?? throw new ArgumentNullException(nameof(applicationService));
+            _adminGymService = adminGymService ?? throw new ArgumentNullException(nameof(adminGymService));
+            _adminDashboardService = adminDashboardService ?? throw new ArgumentNullException(nameof(adminDashboardService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        [HttpGet("dashboard")]
+        [ProducesResponseType(typeof(AdminDashboardResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetDashboardV2()
+        {
+            try
+            {
+                return Ok(await _adminDashboardService.GetStatisticsAsync());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error retrieving Admin dashboard statistics");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        [HttpGet("gyms")]
+        [ProducesResponseType(typeof(PagedResponseDto<GymListResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetGymsV2([FromQuery] GymListRequestDto request)
+        {
+            if (request.PageNumber <= 0 || request.PageSize is < 1 or > 100)
+                return BadRequest(new { message = "PageNumber must be greater than 0 and PageSize must be between 1 and 100." });
+
+            return Ok(await _adminGymService.GetPagedAsync(request));
+        }
+
+        [HttpGet("gyms/{id:int}")]
+        [ProducesResponseType(typeof(GymDetailsResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetGymDetailsV2(int id)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Gym ID must be greater than 0" });
+
+            var gym = await _adminGymService.GetDetailsAsync(id);
+            return gym is null
+                ? NotFound(new { message = $"Gym with id {id} not found" })
+                : Ok(gym);
+        }
+
+        [HttpPatch("gyms/{id:int}/activate")]
+        [HttpPatch("gyms/{id:int}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SetGymStatusV2(int id)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Gym ID must be greater than 0" });
+
+            var active = HttpContext.Request.Path.Value?.EndsWith("/activate", StringComparison.OrdinalIgnoreCase) == true;
+            try
+            {
+                await _adminGymService.SetStatusAsync(id, active);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("owners")]
+        [ProducesResponseType(typeof(PagedResponseDto<OwnerListResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetOwnersV2([FromQuery] OwnerListRequestDto request)
+        {
+            if (request.PageNumber <= 0 || request.PageSize is < 1 or > 100)
+                return BadRequest(new { message = "PageNumber must be greater than 0 and PageSize must be between 1 and 100." });
+
+            return Ok(await _gymOwnerService.GetPagedForAdminAsync(request));
+        }
+
+        [HttpGet("owners/{id:int}")]
+        [ProducesResponseType(typeof(OwnerDetailsResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetOwnerDetailsV2(int id)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Owner ID must be greater than 0" });
+
+            var owner = await _gymOwnerService.GetDetailsForAdminAsync(id);
+            return owner is null
+                ? NotFound(new { message = $"GymOwner with id {id} not found" })
+                : Ok(owner);
+        }
+
+        [HttpPatch("owners/{id:int}/activate")]
+        [HttpPatch("owners/{id:int}/deactivate")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SetOwnerStatusV2(int id)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Owner ID must be greater than 0" });
+
+            var active = HttpContext.Request.Path.Value?.EndsWith("/activate", StringComparison.OrdinalIgnoreCase) == true;
+            try
+            {
+                await _gymOwnerService.SetOwnerStatusAsync(id, active);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("applications")]
+        [ProducesResponseType(typeof(Gym_Platform_V1.data.DTOs.Admin.Common.PagedResponseDto<ApplicationListResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetApplicationsV2([FromQuery] ApplicationListRequestDto request)
+        {
+            try
+            {
+                if (request.PageNumber <= 0 || request.PageSize is < 1 or > 100)
+                    return BadRequest(new { message = "PageNumber must be greater than 0 and PageSize must be between 1 and 100." });
+
+                return Ok(await _applicationService.GetPagedApplicationsAsync(request));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error retrieving Admin V2 applications");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred", traceId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        [HttpGet("applications/{id:int}")]
+        [ProducesResponseType(typeof(GymOwnerApplicationResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetApplicationDetailsV2(int id)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Application ID must be greater than 0" });
+
+            var application = await _applicationService.GetByIdForAdminAsync(id);
+            return application is null
+                ? NotFound(new { message = $"Application with id {id} not found" })
+                : Ok(application);
         }
 
         // ============================================

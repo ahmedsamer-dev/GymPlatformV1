@@ -6,7 +6,9 @@ using Gym_Platform_V1.data.DTOs.Member;
 using Gym_Platform_V1.data.DTOs.MembershipPlan;
 using Gym_Platform_V1.data.DTOs.Subscription;
 using Gym_Platform_V1.data.DTOs.Trainer;
+using Gym_Platform_V1.data.DTOs.Admin.Applications;
 using Mapster;
+using Gym_Platform_V1.data.DTOs.Admin.Owners;
 
 public static class MapsterConfig
 {
@@ -22,6 +24,12 @@ public static class MapsterConfig
             .NewConfig();
 
         TypeAdapterConfig<GymOwnerApplication, GymOwnerApplicationResponseDto>
+            .NewConfig();
+
+        TypeAdapterConfig<GymOwnerApplication, ApplicationListResponseDto>
+            .NewConfig();
+
+        TypeAdapterConfig<GymOwner, OwnerListResponseDto>
             .NewConfig();
 
         TypeAdapterConfig<Trainer, TrainerResponseDto>

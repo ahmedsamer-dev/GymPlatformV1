@@ -85,6 +85,7 @@ namespace Gym_Platform_V1.Controllers
         /// <returns>Login response with JWT token if successful</returns>
         [HttpPost("owner/login")]
         [ProducesResponseType(typeof(GymOwnerLoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(GymOwnerLoginResponseDto), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GymOwnerLoginResponseDto>> OwnerLogin([FromBody] GymOwnerLoginRequestDto request)
@@ -93,7 +94,7 @@ namespace Gym_Platform_V1.Controllers
             {
                 var response = await _gymOwnerAuthService.LoginAsync(request);
                 if (!response.Success)
-                    return BadRequest(response);
+                    return Unauthorized(response);
 
                 return Ok(response);
             }
@@ -111,6 +112,7 @@ namespace Gym_Platform_V1.Controllers
         /// <returns>Login response with JWT token if successful</returns>
         [HttpPost("trainer/login")]
         [ProducesResponseType(typeof(TrainerLoginResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(TrainerLoginResponseDto), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TrainerLoginResponseDto>> TrainerLogin([FromBody] TrainerLoginRequestDto request)
@@ -121,7 +123,7 @@ namespace Gym_Platform_V1.Controllers
 
                 if (!response.Success)
                 {
-                    return BadRequest(response);
+                    return Unauthorized(response);
                 }
 
                 return Ok(response);
@@ -142,9 +144,9 @@ namespace Gym_Platform_V1.Controllers
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto request)
         {
             var result = await _authSessionService.RotateAsync(request?.RefreshToken ?? string.Empty);
-            if (result == null)
-                return Unauthorized(new { message = "Invalid refresh token" });
-            return Ok(result);
+            if (!result.Succeeded)
+                return Unauthorized(new { message = result.ErrorMessage ?? "Invalid refresh token" });
+            return Ok(result.Tokens);
         }
 
         [HttpPost("revoke")]

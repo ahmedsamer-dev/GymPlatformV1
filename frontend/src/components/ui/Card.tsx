@@ -19,12 +19,13 @@ export const Card: React.FC<CardProps> = ({ children, className = '', padding = 
     <div
       className={className}
       style={{
-        backgroundColor: 'var(--color-bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border)',
-        boxShadow: 'var(--shadow-xs)',
+        backgroundColor: 'var(--gm-surface)',
+        borderRadius: 'var(--gm-radius-xl)',
+        border: '1px solid var(--gm-border)',
+        boxShadow: 'var(--gm-shadow-sm)',
         padding: paddingMap[padding],
         overflow: 'hidden',
+        transition: `border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease)`,
         ...style,
       }}
     >

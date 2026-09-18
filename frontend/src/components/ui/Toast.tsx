@@ -1,34 +1,14 @@
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import React, { useState, useCallback, type ReactNode } from 'react';
 import { CheckCircle, AlertCircle, X, Info } from 'lucide-react';
+import { ToastContext, type ToastMessage, type ToastType } from './ToastContext';
 
-type ToastType = 'success' | 'error' | 'info';
-
-interface Toast {
-  id: number;
-  type: ToastType;
-  message: string;
-}
-
-interface ToastContextValue {
-  toast: {
-    success: (message: string) => void;
-    error: (message: string) => void;
-    info: (message: string) => void;
-  };
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
-
-export const useToast = (): ToastContextValue['toast'] => {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
-  return ctx.toast;
-};
+export { useToast } from './ToastContext';
+export type { ToastType, ToastMessage, ToastContextValue } from './ToastContext';
 
 let toastId = 0;
 
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = useCallback((type: ToastType, message: string) => {
     const id = ++toastId;
@@ -75,30 +55,30 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 };
 
 const iconMap: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle size={18} />,
-  error: <AlertCircle size={18} />,
-  info: <Info size={18} />,
+  success: <CheckCircle size={18} strokeWidth={2} />,
+  error: <AlertCircle size={18} strokeWidth={2} />,
+  info: <Info size={18} strokeWidth={2} />,
 };
 
 const colorMap: Record<ToastType, { bg: string; border: string; icon: string }> = {
   success: {
-    bg: 'var(--color-bg-surface)',
-    border: 'var(--color-success-200)',
-    icon: 'var(--color-success-600)',
+    bg: 'var(--gm-surface)',
+    border: 'var(--gm-success-border)',
+    icon: 'var(--gm-success)',
   },
   error: {
-    bg: 'var(--color-bg-surface)',
-    border: 'var(--color-danger-200)',
-    icon: 'var(--color-danger-600)',
+    bg: 'var(--gm-surface)',
+    border: 'var(--gm-danger-border)',
+    icon: 'var(--gm-danger)',
   },
   info: {
-    bg: 'var(--color-bg-surface)',
-    border: 'var(--color-primary-200)',
-    icon: 'var(--color-primary-600)',
+    bg: 'var(--gm-surface)',
+    border: 'var(--gm-primary-border)',
+    icon: 'var(--gm-primary)',
   },
 };
 
-const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onClose }) => {
+const ToastItem: React.FC<{ toast: ToastMessage; onClose: () => void }> = ({ toast, onClose }) => {
   const c = colorMap[toast.type];
 
   return (
@@ -106,27 +86,28 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onC
       role="alert"
       style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: '10px',
-        padding: '12px 14px',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 16px',
         backgroundColor: c.bg,
         border: `1px solid ${c.border}`,
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-lg)',
-        animation: 'toast-in var(--duration-slow) var(--ease)',
+        borderRadius: 'var(--gm-radius-lg)',
+        boxShadow: 'var(--gm-shadow-lg)',
+        animation: 'toast-in 0.25s var(--gm-ease)',
         pointerEvents: 'auto',
       }}
     >
-      <span style={{ color: c.icon, flexShrink: 0, marginTop: '1px' }}>
+      <span style={{ color: c.icon, flexShrink: 0, display: 'flex' }}>
         {iconMap[toast.type]}
       </span>
       <p
         style={{
           flex: 1,
-          fontSize: 'var(--font-size-sm)',
-          color: 'var(--color-text-main)',
+          fontSize: 'var(--gm-font-size-sm)',
+          fontWeight: 500,
+          color: 'var(--gm-text-primary)',
           margin: 0,
-          lineHeight: 'var(--line-height-normal)',
+          lineHeight: 1.45,
         }}
       >
         {toast.message}
@@ -138,15 +119,18 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onC
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '20px',
-          height: '20px',
-          borderRadius: 'var(--radius-sm)',
-          color: 'var(--color-neutral-400)',
+          width: '24px',
+          height: '24px',
+          borderRadius: 'var(--gm-radius-sm)',
+          color: 'var(--gm-text-muted)',
+          backgroundColor: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
           flexShrink: 0,
-          marginTop: '1px',
+          transition: 'color var(--gm-transition-fast)',
         }}
       >
-        <X size={14} />
+        <X size={16} strokeWidth={2} />
       </button>
     </div>
   );

@@ -12,7 +12,12 @@ import { ApplyPage } from '../pages/public/ApplyPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 
 // Admin Pages
-import { AdminDashboard } from '../pages/admin/AdminDashboard';
+import { DashboardPage } from '../pages/admin/DashboardPage';
+import { ApplicationsPage } from '../pages/admin/ApplicationsPage';
+import { OwnersPage } from '../pages/admin/OwnersPage';
+import { OwnerDetailsPage } from '../pages/admin/OwnerDetailsPage';
+import { GymsPage } from '../pages/admin/GymsPage';
+import { GymDetailsPage } from '../pages/admin/GymDetailsPage';
 
 // Owner Pages
 import { OwnerDashboard } from '../pages/owner/OwnerDashboard';
@@ -30,9 +35,9 @@ export const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes — the landing page renders its own navbar/footer */}
+        <Route path="/" element={<LandingPage />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/apply" element={<ApplyPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Route>
@@ -42,8 +47,12 @@ export const AppRoutes = () => {
           {/* Admin Routes */}
           <Route element={<RoleRoute allowedRole="Admin" />}>
             <Route element={<AppShell />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/applications" element={<AdminDashboard />} />
+              <Route path="/admin" element={<DashboardPage />} />
+              <Route path="/admin/applications" element={<ApplicationsPage />} />
+              <Route path="/admin/owners" element={<OwnersPage />} />
+              <Route path="/admin/owners/:ownerId" element={<OwnerDetailsPage />} />
+              <Route path="/admin/gyms" element={<GymsPage />} />
+              <Route path="/admin/gyms/:gymId" element={<GymDetailsPage />} />
             </Route>
           </Route>
 

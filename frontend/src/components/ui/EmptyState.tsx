@@ -16,31 +16,32 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, acti
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 24px',
+        padding: '52px 24px',
         textAlign: 'center',
       }}
     >
       <div
         style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: 'var(--radius-xl)',
-          backgroundColor: 'var(--color-neutral-100)',
+          width: '52px',
+          height: '52px',
+          borderRadius: 'var(--gm-radius-xl)',
+          backgroundColor: 'var(--gm-surface-soft)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '16px',
-          color: 'var(--color-neutral-400)',
+          color: 'var(--gm-text-muted)',
         }}
       >
-        {icon || <Inbox size={22} />}
+        {icon || <Inbox size={24} strokeWidth={2} />}
       </div>
       <h3
         style={{
-          fontSize: 'var(--font-size-base)',
-          fontWeight: 600,
-          color: 'var(--color-text-main)',
+          fontSize: '1.1875rem',
+          fontWeight: 700,
+          color: 'var(--gm-text-primary)',
           margin: 0,
+          letterSpacing: '-0.02em',
         }}
       >
         {title}
@@ -48,16 +49,17 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, acti
       {description && (
         <p
           style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'var(--color-text-muted)',
-            marginTop: '4px',
-            maxWidth: '320px',
+            fontSize: 'var(--font-size-base)',
+            color: 'var(--gm-text-secondary)',
+            marginTop: '6px',
+            maxWidth: '380px',
+            lineHeight: 'var(--line-height-relaxed)',
           }}
         >
           {description}
         </p>
       )}
-      {action && <div style={{ marginTop: '16px' }}>{action}</div>}
+      {action && <div style={{ marginTop: '18px' }}>{action}</div>}
     </div>
   );
 };

@@ -20,10 +20,10 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', fullPage = false 
       aria-label="Loading"
       role="status"
     >
-      <circle cx="12" cy="12" r="10" stroke="var(--color-neutral-200)" strokeWidth="3" />
+      <circle cx="12" cy="12" r="10" stroke="var(--gm-border)" strokeWidth="3" />
       <path
         d="M22 12a10 10 0 0 0-10-10"
-        stroke="var(--color-primary-600)"
+        stroke="var(--gm-primary)"
         strokeWidth="3"
         strokeLinecap="round"
       />

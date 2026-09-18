@@ -2,6 +2,8 @@
 using Gym_Management_System.Entities;
 using Gym_Platform_V1.Abstractions.Interfaces;
 using Gym_Platform_V1.data.DTOs.GymOwnerApplication;
+using Gym_Platform_V1.data.DTOs.Admin.Applications;
+using Gym_Platform_V1.data.DTOs.Admin.Common;
 using Gym_Platform_V1.Entities;
 using Gym_Platform_V1.enums;
 using Mapster;
@@ -18,6 +20,66 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<PagedResponseDto<ApplicationListResponseDto>> GetPagedApplicationsAsync(ApplicationListRequestDto request)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            var query = _dbContext.GymOwnerApplications
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (request.Status.HasValue)
+                query = query.Where(a => a.Status == request.Status.Value);
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+                query = query.Where(a => a.FullName.Contains(search)
+                    || a.Email.Contains(search)
+                    || a.PhoneNumber.Contains(search)
+                    || a.GymName.Contains(search)
+                    || a.UserName.Contains(search));
+            }
+
+            var descending = !string.Equals(request.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+            query = request.SortBy?.ToLowerInvariant() switch
+            {
+                "fullname" => descending ? query.OrderByDescending(a => a.FullName) : query.OrderBy(a => a.FullName),
+                "status" => descending ? query.OrderByDescending(a => a.Status) : query.OrderBy(a => a.Status),
+                "gymname" => descending ? query.OrderByDescending(a => a.GymName) : query.OrderBy(a => a.GymName),
+                _ => descending ? query.OrderByDescending(a => a.CreatedAt) : query.OrderBy(a => a.CreatedAt)
+            };
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+            var items = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ProjectToType<ApplicationListResponseDto>()
+                .ToListAsync();
+
+            return new PagedResponseDto<ApplicationListResponseDto>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<GymOwnerApplicationResponseDto?> GetByIdForAdminAsync(int applicationId)
+        {
+            if (applicationId <= 0)
+                return null;
+
+            return await _dbContext.GymOwnerApplications
+                .AsNoTracking()
+                .Where(a => a.Id == applicationId)
+                .ProjectToType<GymOwnerApplicationResponseDto>()
+                .FirstOrDefaultAsync();
         }
 
         public async Task<GymOwnerApplicationResponseDto> SubmitApplicationAsync(CreateGymOwnerApplicationRequestDto request)

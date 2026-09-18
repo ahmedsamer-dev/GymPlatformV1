@@ -9,17 +9,19 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, hint, id, options, style, disabled, ...props }, ref) => {
-    const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+    const reactId = React.useId();
+    const selectId = id || `select-${reactId}`;
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', width: '100%' }}>
         {label && (
           <label
             htmlFor={selectId}
             style={{
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 500,
-              color: 'var(--color-neutral-700)',
+              fontSize: 'var(--gm-text-sm)',
+              fontWeight: 600,
+              color: 'var(--gm-text-primary)',
+              lineHeight: 'var(--line-height-tight)',
             }}
           >
             {label}
@@ -32,32 +34,31 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           style={{
             display: 'block',
             width: '100%',
-            padding: '8px 12px',
+            padding: '9px 36px 9px 13px',
             fontSize: 'var(--font-size-base)',
-            color: 'var(--color-text-main)',
-            backgroundColor: disabled ? 'var(--color-neutral-100)' : 'var(--color-bg-surface)',
-            border: `1px solid ${error ? 'var(--color-danger-500)' : 'var(--color-neutral-300)'}`,
-            borderRadius: 'var(--radius-md)',
+            color: 'var(--gm-text-primary)',
+            backgroundColor: disabled ? 'var(--gm-surface-soft)' : 'var(--gm-surface)',
+            border: `1px solid ${error ? 'var(--gm-danger)' : 'var(--gm-border)'}`,
+            borderRadius: 'var(--gm-radius-md)',
             outline: 'none',
-            transition: `border-color var(--duration-fast) var(--ease)`,
+            transition: `border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease)`,
             appearance: 'none',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 3.5L11.5 6'/%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 10px center',
+            backgroundPosition: 'right 12px center',
             backgroundSize: '16px',
-            paddingRight: '32px',
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.7 : 1,
             ...style,
           }}
           onFocus={(e) => {
             if (!error && !disabled) {
-              e.currentTarget.style.borderColor = 'var(--color-primary-500)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-100)';
+              e.currentTarget.style.borderColor = 'var(--gm-primary)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.14)';
             }
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = error ? 'var(--color-danger-500)' : 'var(--color-neutral-300)';
+            e.currentTarget.style.borderColor = error ? 'var(--gm-danger)' : 'var(--gm-border)';
             e.currentTarget.style.boxShadow = 'none';
           }}
           aria-invalid={error ? 'true' : undefined}
@@ -75,8 +76,9 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             id={`${selectId}-error`}
             role="alert"
             style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-danger-600)',
+              fontSize: 'var(--gm-text-sm)',
+              fontWeight: 500,
+              color: 'var(--gm-danger-dark)',
               margin: 0,
             }}
           >
@@ -87,8 +89,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           <p
             id={`${selectId}-hint`}
             style={{
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-muted)',
+              fontSize: 'var(--gm-text-xs)',
+              color: 'var(--gm-text-muted)',
               margin: 0,
             }}
           >

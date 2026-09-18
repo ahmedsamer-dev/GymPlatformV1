@@ -21,10 +21,10 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <label
               htmlFor={textareaId}
               style={{
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 500,
-                color: 'var(--color-neutral-700)',
-                lineHeight: 'var(--line-height-normal)',
+                fontSize: 'var(--gm-text-sm)',
+                fontWeight: 600,
+                color: 'var(--gm-text-primary)',
+                lineHeight: 'var(--line-height-tight)',
               }}
             >
               {label}
@@ -32,8 +32,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             {showCount && maxLength && (
               <span
                 style={{
-                  fontSize: 'var(--font-size-xs)',
-                  color: currentLength > maxLength ? 'var(--color-danger-500)' : 'var(--color-text-muted)',
+                  fontSize: 'var(--gm-text-xs)',
+                  color: currentLength > maxLength ? 'var(--gm-danger)' : 'var(--gm-text-muted)',
                 }}
               >
                 {currentLength}/{maxLength}
@@ -51,14 +51,14 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             display: 'block',
             width: '100%',
             minHeight: '96px',
-            padding: '8px 12px',
+            padding: '9px 13px',
             fontSize: 'var(--font-size-base)',
             fontFamily: 'inherit',
             lineHeight: 'var(--line-height-normal)',
-            color: 'var(--color-text-main)',
-            backgroundColor: 'var(--color-bg-surface)',
-            border: `1px solid ${error ? 'var(--color-danger-500)' : 'var(--color-neutral-300)'}`,
-            borderRadius: 'var(--radius-md)',
+            color: 'var(--gm-text-primary)',
+            backgroundColor: 'var(--gm-surface)',
+            border: `1px solid ${error ? 'var(--gm-danger)' : 'var(--gm-border)'}`,
+            borderRadius: 'var(--gm-radius-md)',
             transition: `border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease)`,
             outline: 'none',
             resize: 'vertical',
@@ -66,12 +66,12 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           }}
           onFocus={(e) => {
             if (!error) {
-              e.currentTarget.style.borderColor = 'var(--color-primary-500)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-100)';
+              e.currentTarget.style.borderColor = 'var(--gm-primary)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.14)';
             }
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = error ? 'var(--color-danger-500)' : 'var(--color-neutral-300)';
+            e.currentTarget.style.borderColor = error ? 'var(--gm-danger)' : 'var(--gm-border)';
             e.currentTarget.style.boxShadow = 'none';
           }}
           aria-invalid={error ? 'true' : undefined}
@@ -83,8 +83,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={`${textareaId}-error`}
             role="alert"
             style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-danger-600)',
+              fontSize: 'var(--gm-text-sm)',
+              fontWeight: 500,
+              color: 'var(--gm-danger-dark)',
               margin: 0,
             }}
           >
@@ -95,8 +96,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           <p
             id={`${textareaId}-hint`}
             style={{
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-muted)',
+              fontSize: 'var(--gm-text-xs)',
+              color: 'var(--gm-text-muted)',
               margin: 0,
             }}
           >

@@ -1,67 +1,103 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
-import { Dumbbell } from 'lucide-react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { BrandLogo } from '../components/brand/BrandLogo';
 
+/**
+ * Shared layout for the authentication pages (/login and /apply):
+ * same navbar, page background, and minimal footer on both.
+ * Route-aware nav actions only — no behavioral logic.
+ */
 export const AppLayout: React.FC = () => {
+  const location = useLocation();
+  const isLogin = location.pathname === '/login';
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'var(--gm-bg)',
+      }}
+    >
+      {/* Navbar */}
       <header
         style={{
-          height: '56px',
-          backgroundColor: 'var(--color-bg-surface)',
-          borderBottom: '1px solid var(--color-border)',
+          height: '64px',
+          backgroundColor: 'var(--gm-surface)',
+          borderBottom: '1px solid var(--gm-border)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 24px',
           flexShrink: 0,
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
         }}
       >
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          <Dumbbell size={22} style={{ color: 'var(--color-primary-600)' }} />
+        <Link
+          to="/"
+          aria-label="GymMaster home"
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
+        >
+          <BrandLogo size={34} />
           <span
             style={{
-              fontSize: 'var(--font-size-md)',
-              fontWeight: 700,
-              color: 'var(--color-text-main)',
-              letterSpacing: '-0.01em',
+              fontSize: '1.125rem',
+              fontWeight: 800,
+              color: 'var(--gm-text-primary)',
+              letterSpacing: '-0.02em',
             }}
           >
             GymMaster
           </span>
         </Link>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link
-            to="/apply"
-            style={{
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 500,
-              color: 'var(--color-text-secondary)',
-              textDecoration: 'none',
-            }}
-          >
-            Become a Gym Owner
-          </Link>
-          <Link
-            to="/login"
-            style={{
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 500,
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-primary-600)',
-              color: '#fff',
-              textDecoration: 'none',
-              transition: `background-color var(--duration-fast) var(--ease)`,
-            }}
-          >
-            Sign In
-          </Link>
+
+        <nav aria-label="Account" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {isLogin ? (
+            <>
+              <span style={{ fontSize: 'var(--gm-font-size-sm)', color: 'var(--gm-text-secondary)', display: 'none' }}>
+                Looking to manage a gym?
+              </span>
+              <Link
+                to="/apply"
+                className="gm-btn-primary"
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 'var(--gm-radius-md)',
+                  fontSize: 'var(--gm-font-size-sm)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Become a Gym Owner
+              </Link>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 'var(--gm-font-size-sm)', color: 'var(--gm-text-secondary)' }}>
+                Already have an account?
+              </span>
+              <Link
+                to="/login"
+                className="gm-btn-primary"
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 'var(--gm-radius-md)',
+                  fontSize: 'var(--gm-font-size-sm)',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Sign In
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
-      {/* Main */}
+      {/* Content */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Outlet />
       </main>
@@ -69,12 +105,12 @@ export const AppLayout: React.FC = () => {
       {/* Footer */}
       <footer
         style={{
-          padding: '20px 24px',
-          borderTop: '1px solid var(--color-border)',
-          backgroundColor: 'var(--color-neutral-50)',
+          padding: '18px 24px',
+          borderTop: '1px solid var(--gm-border)',
+          backgroundColor: 'var(--gm-surface)',
           textAlign: 'center',
-          fontSize: 'var(--font-size-sm)',
-          color: 'var(--color-text-muted)',
+          fontSize: 'var(--gm-font-size-sm)',
+          color: 'var(--gm-text-muted)',
         }}
       >
         © {new Date().getFullYear()} GymMaster. All rights reserved.

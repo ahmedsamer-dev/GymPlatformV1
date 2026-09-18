@@ -5,12 +5,12 @@ interface BadgeProps {
   variant?: 'success' | 'warning' | 'danger' | 'neutral' | 'primary';
 }
 
-const variantStyles: Record<string, { bg: string; color: string; dot: string }> = {
-  success: { bg: 'var(--color-success-50)', color: 'var(--color-success-700)', dot: 'var(--color-success-500)' },
-  warning: { bg: 'var(--color-warning-50)', color: 'var(--color-warning-700)', dot: 'var(--color-warning-500)' },
-  danger:  { bg: 'var(--color-danger-50)',  color: 'var(--color-danger-700)',  dot: 'var(--color-danger-500)' },
-  primary: { bg: 'var(--color-primary-50)', color: 'var(--color-primary-700)', dot: 'var(--color-primary-500)' },
-  neutral: { bg: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)', dot: 'var(--color-neutral-400)' },
+const variantStyles: Record<string, { bg: string; color: string; dot: string; border?: string }> = {
+  success: { bg: 'var(--gm-success-soft)', color: 'var(--gm-success-dark)', dot: 'var(--gm-success)', border: 'rgba(16, 185, 129, 0.2)' },
+  warning: { bg: 'var(--gm-warning-soft)', color: 'var(--gm-warning-dark)', dot: 'var(--gm-warning)', border: 'rgba(245, 158, 11, 0.25)' },
+  danger:  { bg: 'var(--gm-danger-soft)',  color: 'var(--gm-danger-dark)',  dot: 'var(--gm-danger)',  border: 'rgba(239, 68, 68, 0.2)' },
+  primary: { bg: 'var(--gm-primary-soft)', color: 'var(--gm-primary-hover)', dot: 'var(--gm-primary)', border: 'rgba(37, 99, 235, 0.2)' },
+  neutral: { bg: 'var(--gm-surface-soft)', color: '#334155',                dot: 'var(--gm-text-muted)', border: 'var(--gm-border)' },
 };
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral' }) => {
@@ -22,13 +22,14 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral' }) =
         display: 'inline-flex',
         alignItems: 'center',
         gap: '6px',
-        padding: '2px 10px',
-        fontSize: 'var(--font-size-xs)',
-        fontWeight: 500,
-        lineHeight: '20px',
-        borderRadius: 'var(--radius-full)',
+        padding: '3px 10px',
+        fontSize: 'var(--gm-text-xs)',
+        fontWeight: 600,
+        lineHeight: '18px',
+        borderRadius: 'var(--gm-radius-full)',
         backgroundColor: s.bg,
         color: s.color,
+        border: s.border ? `1px solid ${s.border}` : 'none',
         whiteSpace: 'nowrap',
       }}
     >

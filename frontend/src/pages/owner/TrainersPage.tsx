@@ -17,7 +17,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../components/ui/ToastContext';
 import type { Trainer } from '../../types/shared';
 
 type CreateTrainerFormValues = z.infer<typeof createTrainerSchema>;

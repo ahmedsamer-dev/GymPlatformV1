@@ -46,6 +46,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Load the Trainer read-only (validation only — the Trainer is not modified here).
             var trainer = await _dbContext.Trainers
                 .AsNoTracking()
+                .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -59,6 +61,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Inactive Trainer attempted to create a Subscription: {TrainerId}", trainerId);
                 throw new InvalidOperationException("Trainer account is inactive.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Trainer account or Gym is inactive.");
 
             // Load the Member read-only. The Member is linked to the new Subscription via FK only.
             var member = await _dbContext.Members
@@ -129,6 +134,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Load the Trainer read-only (validation only).
             var trainer = await _dbContext.Trainers
                 .AsNoTracking()
+                .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -142,6 +149,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Inactive Trainer attempted to create a Subscription: {TrainerId}", trainerId);
                 throw new InvalidOperationException("Trainer account is inactive.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Trainer account or Gym is inactive.");
 
             // Safeguard: a Member must never have more than one active Subscription.
             // For a brand-new Member this will naturally be false, but the rule is enforced.
@@ -266,6 +276,16 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 throw new KeyNotFoundException($"Subscription with id {subscriptionId} not found.");
             }
 
+            var trainer = await _dbContext.Trainers
+                .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == trainerId);
+            if (trainer is null)
+                throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
+            if (!trainer.IsActive || trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Trainer account or Gym is inactive.");
+
             // The Subscription must belong to a Member of the authenticated Trainer.
             // A Trainer must NOT use sessions from another Trainer's Member.
             if (subscription.Member == null || subscription.Member.TrainerId != trainerId)
@@ -359,6 +379,8 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             // Validate that the authenticated Trainer exists (mirrors GetMyMembersAsync).
             var trainer = await _dbContext.Trainers
                 .AsNoTracking()
+                .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (trainer == null)
@@ -366,6 +388,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("Trainer not found: {TrainerId}", trainerId);
                 throw new KeyNotFoundException($"Trainer with id {trainerId} not found.");
             }
+
+            if (!trainer.IsActive || trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Trainer account or Gym is inactive.");
 
             // Single projection query. The ownership filter (Member.TrainerId == trainerId)
             // is applied in the database — no in-memory filtering and no unnecessary Includes.

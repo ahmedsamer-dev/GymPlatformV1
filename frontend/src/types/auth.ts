@@ -1,43 +1,66 @@
+// ── Roles ──────────────────────────────────────────────────────────────
 export type Role = 'Admin' | 'GymOwner' | 'Trainer';
 
+// ── Auth API contracts (mirror backend DTOs, camelCase JSON) ───────────
+
+// Backend: AdminLoginResponseDto (AdminAuthService → AuthController)
 export interface AdminLoginResponse {
-  token: string;
-  admin: {
+  success: boolean;
+  message?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  admin?: {
     id: number;
-    userName: string;
-    email: string;
-    role: string;
-  };
+    fullName?: string | null;
+    userName?: string | null;
+    email?: string | null;
+  } | null;
 }
 
+// Backend: GymOwnerLoginResponseDto (info object is `owner`)
 export interface GymOwnerLoginResponse {
-  token: string;
-  gymOwner: {
+  success: boolean;
+  message?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  owner?: {
     id: number;
-    userName: string;
-    email: string;
-    phoneNumber: string;
-    isActive: boolean;
-    role: string;
-  };
+    fullName?: string | null;
+    userName?: string | null;
+    email?: string | null;
+  } | null;
 }
 
+// Backend: TrainerLoginResponseDto
 export interface TrainerLoginResponse {
-  token: string;
-  trainer: {
+  success: boolean;
+  message?: string | null;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  trainer?: {
     id: number;
-    userName: string;
-    fullName: string;
-    phoneNumber: string;
-    gymId: number;
-    isActive: boolean;
-    role: string;
-  };
+    fullName?: string | null;
+    userName?: string | null;
+    gymId?: number | null;
+  } | null;
 }
 
+// Backend: AuthTokenResult — returned by POST /auth/refresh
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+// ── JWT payload (as issued by the backend TokenService) ────────────────
+// Claims: nameid, unique_name, role, email, FullName,
+//         OwnerId (GymOwner tokens only), GymId (Trainer tokens only).
 export interface JwtPayload {
-  nameid: string;
+  nameid?: string;
+  unique_name?: string;
+  FullName?: string;
+  email?: string;
   OwnerId?: string;
-  role: Role;
-  exp: number;
+  GymId?: string;
+  role?: Role | string;
+  exp?: number;
 }

@@ -94,6 +94,8 @@ builder.Services.AddScoped<IGymOwnerAuthService, GymOwnerAuthService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<IMembershipPlanService, MembershipPlanService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IAdminGymService, AdminGymService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 // ============================================
 // MapsterConfig.RegisterMappings();
 // ============================================

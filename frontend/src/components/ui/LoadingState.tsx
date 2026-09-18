@@ -20,8 +20,9 @@ export const LoadingState: React.FC<LoadingStateProps> = ({ message = 'Loading..
       <Spinner size="md" />
       <p
         style={{
-          fontSize: 'var(--font-size-sm)',
-          color: 'var(--color-text-muted)',
+          fontSize: 'var(--gm-font-size-sm)',
+          fontWeight: 500,
+          color: 'var(--gm-text-secondary)',
           margin: 0,
         }}
       >

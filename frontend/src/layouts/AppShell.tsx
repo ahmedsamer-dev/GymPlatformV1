@@ -4,8 +4,9 @@ import {
   LayoutDashboard, Users, CreditCard, ClipboardList,
   FileText, LogOut, Menu, X, Dumbbell
 } from 'lucide-react';
+import { BrandLogo } from '../components/brand/BrandLogo';
 import { useAuth } from '../hooks/useAuth';
-import { decodeToken } from '../utils/token';
+import { decodeToken, getAccessToken } from '../utils/token';
 import type { Role } from '../types/auth';
 
 /* ── Navigation config per role ─────────────────────────── */
@@ -16,20 +17,23 @@ interface NavItem {
 }
 
 const ownerNav: NavItem[] = [
-  { name: 'Dashboard', path: '/owner', icon: <LayoutDashboard size={18} /> },
-  { name: 'Trainers', path: '/owner/trainers', icon: <Users size={18} /> },
-  { name: 'Members', path: '/owner/members', icon: <Users size={18} /> },
-  { name: 'Membership Plans', path: '/owner/membership-plans', icon: <ClipboardList size={18} /> },
+  { name: 'Dashboard', path: '/owner', icon: <LayoutDashboard size={18} strokeWidth={2} /> },
+  { name: 'Trainers', path: '/owner/trainers', icon: <Users size={18} strokeWidth={2} /> },
+  { name: 'Members', path: '/owner/members', icon: <Users size={18} strokeWidth={2} /> },
+  { name: 'Membership Plans', path: '/owner/membership-plans', icon: <ClipboardList size={18} strokeWidth={2} /> },
 ];
 
 const trainerNav: NavItem[] = [
-  { name: 'Dashboard', path: '/trainer', icon: <LayoutDashboard size={18} /> },
-  { name: 'Members', path: '/trainer/members', icon: <Users size={18} /> },
-  { name: 'Subscriptions', path: '/trainer/subscriptions', icon: <CreditCard size={18} /> },
+  { name: 'Dashboard', path: '/trainer', icon: <LayoutDashboard size={18} strokeWidth={2} /> },
+  { name: 'Members', path: '/trainer/members', icon: <Users size={18} strokeWidth={2} /> },
+  { name: 'Subscriptions', path: '/trainer/subscriptions', icon: <CreditCard size={18} strokeWidth={2} /> },
 ];
 
 const adminNav: NavItem[] = [
-  { name: 'Applications', path: '/admin', icon: <FileText size={18} /> },
+  { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={18} strokeWidth={2} /> },
+  { name: 'Applications', path: '/admin/applications', icon: <FileText size={18} strokeWidth={2} /> },
+  { name: 'Owners', path: '/admin/owners', icon: <Users size={18} strokeWidth={2} /> },
+  { name: 'Gyms', path: '/admin/gyms', icon: <Dumbbell size={18} strokeWidth={2} /> },
 ];
 
 const navMap: Record<Role, NavItem[]> = {
@@ -52,7 +56,6 @@ function isActive(path: string, currentPath: string): boolean {
   return currentPath.startsWith(path);
 }
 
-/* ── AppShell Component ──────────────────────────────────── */
 export const AppShell: React.FC = () => {
   const { logout, role } = useAuth();
   const navigate = useNavigate();
@@ -60,28 +63,29 @@ export const AppShell: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Get user info from token
-  const token = localStorage.getItem('gym_token');
+  const token = getAccessToken();
   const decoded = token ? decodeToken(token) : null;
-  const username = (decoded as any)?.unique_name || (decoded as any)?.nameid || roleLabel[role!] || 'User';
+  const username =
+    (decoded as any)?.unique_name || (decoded as any)?.nameid || (role ? roleLabel[role] : '') || 'User';
+  const initial = username.charAt(0).toUpperCase();
 
   const navItems = role ? navMap[role] : [];
   const currentRoleLabel = role ? roleLabel[role] : '';
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
-
-  // Lock body scroll when mobile drawer open
+  // Lock body scroll when the mobile drawer is open (external-system sync)
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [mobileOpen]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const closeDrawer = () => setMobileOpen(false);
 
   // Find current page title
   const currentPage = navItems.find((item) => isActive(item.path, location.pathname));
@@ -91,9 +95,10 @@ export const AppShell: React.FC = () => {
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-bg-base)' }}>
       {/* ── Desktop Sidebar ─────────────────────────────── */}
       <aside
+        className="sidebar-desktop"
         style={{
           width: 'var(--sidebar-width)',
-          backgroundColor: 'var(--sidebar-bg)',
+          background: 'var(--sidebar-bg)',
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
@@ -103,29 +108,31 @@ export const AppShell: React.FC = () => {
           bottom: 0,
           zIndex: 'var(--z-sidebar)' as any,
         }}
-        className="sidebar-desktop"
       >
         <SidebarContent
           navItems={navItems}
           currentPath={location.pathname}
           username={username}
           currentRoleLabel={currentRoleLabel}
+          initial={initial}
           onLogout={handleLogout}
+          onNavigate={closeDrawer}
         />
       </aside>
 
       {/* ── Mobile Overlay + Drawer ─────────────────────── */}
       {mobileOpen && (
         <div
-          onClick={() => setMobileOpen(false)}
+          className="sidebar-mobile-overlay"
+          onClick={closeDrawer}
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
+            backgroundColor: 'rgba(2, 6, 23, 0.55)',
+            backdropFilter: 'blur(2px)',
             zIndex: 44,
             animation: 'overlay-in var(--duration-fast) var(--ease)',
           }}
-          className="sidebar-mobile-overlay"
         />
       )}
       <aside
@@ -136,7 +143,7 @@ export const AppShell: React.FC = () => {
           left: 0,
           bottom: 0,
           width: 'var(--sidebar-width)',
-          backgroundColor: 'var(--sidebar-bg)',
+          background: 'var(--sidebar-bg)',
           zIndex: 45,
           transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: `transform var(--duration-slow) var(--ease)`,
@@ -149,13 +156,16 @@ export const AppShell: React.FC = () => {
           currentPath={location.pathname}
           username={username}
           currentRoleLabel={currentRoleLabel}
+          initial={initial}
           onLogout={handleLogout}
-          onClose={() => setMobileOpen(false)}
+          onClose={closeDrawer}
+          onNavigate={closeDrawer}
         />
       </aside>
 
       {/* ── Main Area ───────────────────────────────────── */}
       <div
+        className="main-area"
         style={{
           flex: 1,
           display: 'flex',
@@ -163,14 +173,13 @@ export const AppShell: React.FC = () => {
           minHeight: '100vh',
           marginLeft: 'var(--sidebar-width)',
         }}
-        className="main-area"
       >
         {/* TopBar */}
         <header
           style={{
-            height: '56px',
-            backgroundColor: 'var(--color-bg-surface)',
-            borderBottom: '1px solid var(--color-border)',
+            height: '64px',
+            backgroundColor: 'var(--gm-surface)',
+            borderBottom: '1px solid var(--gm-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -178,63 +187,125 @@ export const AppShell: React.FC = () => {
             flexShrink: 0,
             position: 'sticky',
             top: 0,
-            zIndex: 'var(--z-topbar)' as any,
+            zIndex: 30,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Mobile menu button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <button
+              className="mobile-menu-btn"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
-              className="mobile-menu-btn"
               style={{
                 display: 'none',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '36px',
-                height: '36px',
-                borderRadius: 'var(--radius-md)',
-                color: 'var(--color-neutral-600)',
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--gm-radius-md)',
+                color: 'var(--gm-text-secondary)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
               }}
             >
-              <Menu size={20} />
+              <Menu size={20} strokeWidth={2} />
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  fontSize: 'var(--font-size-base)',
-                  fontWeight: 600,
-                  color: 'var(--color-text-main)',
-                }}
-              >
-                {pageTitle}
-              </span>
-            </div>
+            <span
+              style={{
+                fontSize: 'var(--gm-font-size-md)',
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: 'var(--gm-text-primary)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {pageTitle}
+            </span>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            <span>{currentRoleLabel}</span>
-            <span style={{ color: 'var(--color-neutral-300)' }}>·</span>
-            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{username}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span
+              className="topbar-role-chip"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 10px',
+                borderRadius: 'var(--gm-radius-full)',
+                backgroundColor: 'var(--gm-primary-soft)',
+                color: 'var(--gm-primary-dark)',
+                border: '1px solid var(--gm-primary-border)',
+                fontSize: 'var(--gm-font-size-xs)',
+                fontWeight: 600,
+                lineHeight: '16px',
+              }}
+            >
+              {currentRoleLabel}
+            </span>
+            <span
+              className="topbar-username"
+              style={{
+                fontSize: 'var(--gm-font-size-sm)',
+                fontWeight: 600,
+                color: 'var(--gm-text-secondary)',
+                maxWidth: '140px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {username}
+            </span>
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'grid',
+                placeItems: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--gm-primary), var(--gm-primary-dark))',
+                color: '#fff',
+                fontSize: 'var(--gm-font-size-sm)',
+                fontWeight: 700,
+                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
+                flexShrink: 0,
+              }}
+            >
+              {initial}
+            </span>
+            <button
+              onClick={handleLogout}
+              aria-label="Log out"
+              title="Log out"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: 'var(--gm-radius-md)',
+                color: 'var(--gm-text-muted)',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all var(--gm-transition-fast)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--gm-danger-soft)';
+                e.currentTarget.style.color = 'var(--gm-danger)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--gm-text-muted)';
+              }}
+            >
+              <LogOut size={18} strokeWidth={2} />
+            </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main
-          style={{
-            flex: 1,
-            padding: '24px',
-            overflowY: 'auto',
-          }}
-        >
+        <main className="main-content" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
           <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
             <Outlet />
           </div>
@@ -247,6 +318,9 @@ export const AppShell: React.FC = () => {
           .sidebar-desktop { display: none !important; }
           .main-area { margin-left: 0 !important; }
           .mobile-menu-btn { display: flex !important; }
+          .main-content { padding: 16px !important; }
+          .topbar-username { display: none !important; }
+          .topbar-role-chip { display: none !important; }
         }
         @media (min-width: 769px) {
           .sidebar-mobile { display: none !important; }
@@ -263,21 +337,27 @@ interface SidebarContentProps {
   currentPath: string;
   username: string;
   currentRoleLabel: string;
+  initial: string;
   onLogout: () => void;
   onClose?: () => void;
+  onNavigate?: () => void;
 }
 
 const SidebarContent: React.FC<SidebarContentProps> = ({
   navItems,
   currentPath,
+  username,
+  currentRoleLabel,
+  initial,
   onLogout,
   onClose,
+  onNavigate,
 }) => (
   <>
-    {/* Logo */}
+    {/* Brand */}
     <div
       style={{
-        height: '56px',
+        minHeight: '64px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -288,22 +368,12 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
     >
       <Link
         to="/"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          textDecoration: 'none',
-        }}
+        onClick={onNavigate}
+        aria-label="GymMaster home"
+        style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
       >
-        <Dumbbell size={22} style={{ color: 'var(--color-primary-400)' }} />
-        <span
-          style={{
-            fontSize: 'var(--font-size-md)',
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: '-0.01em',
-          }}
-        >
+        <BrandLogo size={32} />
+        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
           GymMaster
         </span>
       </Link>
@@ -317,20 +387,39 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
             justifyContent: 'center',
             width: '32px',
             height: '32px',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-neutral-400)',
+            borderRadius: 'var(--gm-radius-md)',
+            color: 'var(--gm-text-muted)',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
-          <X size={18} />
+          <X size={18} strokeWidth={2} />
         </button>
       )}
     </div>
 
+    {/* Section label */}
+    <span
+      style={{
+        padding: '18px 20px 6px',
+        fontSize: '0.6875rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: 'rgba(148,163,184,0.7)',
+        flexShrink: 0,
+      }}
+    >
+      Menu
+    </span>
+
     {/* Nav Links */}
     <nav
+      aria-label="Main navigation"
       style={{
         flex: 1,
-        padding: '12px 8px',
+        padding: '0 10px',
         display: 'flex',
         flexDirection: 'column',
         gap: '2px',
@@ -343,24 +432,28 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
           <Link
             key={item.path}
             to={item.path}
+            onClick={onNavigate}
+            aria-current={active ? 'page' : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-md)',
+              gap: '12px',
+              height: '40px',
+              padding: '0 12px',
+              borderRadius: 'var(--radius-lg)',
               fontSize: 'var(--font-size-sm)',
-              fontWeight: active ? 500 : 400,
-              color: active ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)',
+              fontWeight: active ? 600 : 500,
+              color: active ? '#fff' : 'var(--sidebar-text)',
               backgroundColor: active ? 'var(--sidebar-item-active)' : 'transparent',
+              boxShadow: active ? '0 8px 16px -8px rgba(37,99,235,0.55)' : 'none',
               textDecoration: 'none',
               transition: `all var(--duration-fast) var(--ease)`,
-              lineHeight: '20px',
+              lineHeight: 1,
             }}
             onMouseEnter={(e) => {
               if (!active) {
                 e.currentTarget.style.backgroundColor = 'var(--sidebar-item-hover)';
-                e.currentTarget.style.color = 'var(--sidebar-text-active)';
+                e.currentTarget.style.color = '#fff';
               }
             }}
             onMouseLeave={(e) => {
@@ -370,46 +463,98 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
               }
             }}
           >
-            <span style={{ flexShrink: 0, display: 'flex' }}>{item.icon}</span>
+            <span style={{ flexShrink: 0, display: 'flex', color: active ? '#fff' : 'var(--color-neutral-400)' }}>
+              {item.icon}
+            </span>
             <span>{item.name}</span>
           </Link>
         );
       })}
     </nav>
 
-    {/* Footer / Logout */}
+    {/* User card + Logout */}
     <div
       style={{
-        padding: '12px 8px',
+        padding: '12px 10px',
         borderTop: '1px solid rgba(255,255,255,0.08)',
         flexShrink: 0,
       }}
     >
-      <button
-        onClick={onLogout}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          padding: '8px 12px',
+          padding: '8px 10px',
+          borderRadius: 'var(--radius-lg)',
+          backgroundColor: 'rgba(255,255,255,0.04)',
+          marginBottom: '8px',
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'grid',
+            placeItems: 'center',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700))',
+            color: '#fff',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          {initial}
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <span
+            style={{
+              display: 'block',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 600,
+              color: '#fff',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {username}
+          </span>
+          <span style={{ display: 'block', fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-400)' }}>
+            {currentRoleLabel}
+          </span>
+        </span>
+      </div>
+      <button
+        onClick={onLogout}
+        aria-label="Log out"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          width: '100%',
+          height: '36px',
+          padding: '0 10px',
           borderRadius: 'var(--radius-md)',
           fontSize: 'var(--font-size-sm)',
+          fontWeight: 500,
           color: 'var(--sidebar-text)',
-          width: '100%',
           textAlign: 'left',
           transition: `all var(--duration-fast) var(--ease)`,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--sidebar-item-hover)';
-          e.currentTarget.style.color = 'var(--sidebar-text-active)';
+          e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.12)';
+          e.currentTarget.style.color = '#fca5a5';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = 'transparent';
           e.currentTarget.style.color = 'var(--sidebar-text)';
         }}
       >
-        <LogOut size={18} />
-        <span>Logout</span>
+        <LogOut size={18} strokeWidth={2} />
+        <span>Log out</span>
       </button>
     </div>
   </>

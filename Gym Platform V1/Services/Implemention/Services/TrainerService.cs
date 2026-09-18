@@ -44,9 +44,13 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 throw new InvalidOperationException("GymOwner account is inactive");
             }
 
+            if (owner.User is not null && !owner.User.IsActive)
+                throw new InvalidOperationException("GymOwner account is inactive");
+
             // Find the Gym selected by the Owner
             // and verify that it belongs to the authenticated Owner.
             var gym = await _dbContext.Gyms
+                .Include(g => g.GymOwner)
                 .FirstOrDefaultAsync(g => g.Id == request.GymId);
 
             if (gym == null)
@@ -60,6 +64,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 _logger.LogWarning("OwnerId {OwnerId} attempted to create Trainer in GymId {GymId} belonging to another owner.", ownerId, request.GymId);
                 throw new ForbiddenException("This Gym does not belong to the current GymOwner.");
             }
+
+            if (!gym.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym.");
 
             // Check username uniqueness among Trainers
             var usernameExists = await _dbContext.Trainers
@@ -129,7 +136,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             var query = _dbContext.Trainers
                 .AsNoTracking()
                 .Where(t => t.Gym != null &&
-                            t.Gym.GymOwnerID == ownerId);
+                            t.Gym.GymOwnerID == ownerId &&
+                            t.Gym.IsActive &&
+                            t.Gym.GymOwner!.IsActive);
 
             if (gymId.HasValue)
             {
@@ -169,6 +178,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             var trainer = await _dbContext.Trainers
                 .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t => t.Id == trainerId);
             //var trainer = await _dbContext.Trainers
             //    .Include(t => t.Gym)
@@ -188,6 +198,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 throw new ForbiddenException("You can only update trainers that belong to your gyms.");
             }
 
+            if (!trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym or GymOwner account.");
+
             // Optional gym move: if gymId is supplied, the Trainer will be moved to that Gym,
             // but the target Gym must belong to the SAME authenticated Owner.
             // This prevents an Owner from moving a Trainer into another Owner's Gym.
@@ -199,7 +212,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 // we are not modifying the Gym entity itself.
                 var targetGym = await _dbContext.Gyms
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(g => g.Id == gymId.Value && g.GymOwnerID == ownerId);
+                    .FirstOrDefaultAsync(g => g.Id == gymId.Value && g.GymOwnerID == ownerId && g.IsActive && g.GymOwner!.IsActive);
 
                 if (targetGym == null)
                 {
@@ -266,7 +279,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 .AsNoTracking()
                 .Where(t => t.Id == trainerId &&
                             t.Gym != null &&
-                            t.Gym.GymOwnerID == ownerId)
+                            t.Gym.GymOwnerID == ownerId &&
+                            t.Gym.IsActive &&
+                            t.Gym.GymOwner!.IsActive)
                 .ProjectToType<TrainerResponseDto>()
                 .FirstOrDefaultAsync();
 
@@ -313,6 +328,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             var trainer = await _dbContext.Trainers
                 .Include(t => t.Gym)
+                .ThenInclude(g => g!.GymOwner)
                 .FirstOrDefaultAsync(t =>
                     t.Id == trainerId &&
                     t.Gym != null &&
@@ -328,6 +344,9 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
                 throw new KeyNotFoundException(
                     $"Trainer with id {trainerId} not found.");
             }
+
+            if (trainer.Gym is null || !trainer.Gym.IsActive || trainer.Gym.GymOwner is not null && !trainer.Gym.GymOwner.IsActive)
+                throw new InvalidOperationException("Cannot operate on an inactive Gym or GymOwner account.");
 
             if (trainer.IsActive == active)
             {

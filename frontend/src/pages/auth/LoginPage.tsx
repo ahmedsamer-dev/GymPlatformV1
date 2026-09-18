@@ -3,8 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AlertCircle, Dumbbell } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { BrandLogo } from '../../components/brand/BrandLogo';
 import { authApi } from '../../api/auth.api';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { loginSchema } from '../../schemas';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -32,46 +34,84 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     setServerError(null);
 
-    try {
-      let token = null;
+    // Error classification for the login cascade:
+    //  - "inactive" messages from ANY role attempt are meaningful and win
+    //    (inactive Owner/Trainer/Admin account, Gym, or GymOwner) — a later
+    //    attempt's generic credentials message must never overwrite them.
+    //  - Any other backend message is remembered as the last explanation.
+    //  - Network failures and 5xx responses bubble to the outer handler,
+    //    which shows a safe generic server/network message.
+    let inactiveMessage: string | null = null;
+    let lastMessage: string | null = null;
 
-      // Try Owner Login
+    const recordFailure = (raw?: string | null) => {
+      if (typeof raw !== 'string') return;
+      const message = raw.trim();
+      if (!message) return;
+      if (/inactive/i.test(message)) {
+        if (!inactiveMessage) inactiveMessage = message;
+      } else {
+        lastMessage = message;
+      }
+    };
+
+    try {
+      let accessToken: string | null = null;
+      let refreshToken: string | null = null;
+
+      // Try Owner Login. A 4xx answer with a message means "try next role";
+      // only network failures and server errors (5xx) abort the cascade.
       try {
         const ownerRes = await authApi.ownerLogin(data);
-        token = ownerRes.token;
-      } catch (err: any) {
-        if (err.response?.status !== 401 && err.response?.status !== 400 && err.response?.status !== 404) {
-          throw err;
+        if (ownerRes.success && ownerRes.accessToken) {
+          accessToken = ownerRes.accessToken;
+          refreshToken = ownerRes.refreshToken ?? null;
+        } else {
+          recordFailure(ownerRes.message);
         }
+      } catch (err: any) {
+        const status: number | undefined = err?.response?.status;
+        if (status === undefined || status >= 500) throw err;
+        recordFailure(err?.response?.data?.message);
       }
 
       // Try Trainer Login
-      if (!token) {
+      if (!accessToken) {
         try {
           const trainerRes = await authApi.trainerLogin(data);
-          token = trainerRes.token;
-        } catch (err: any) {
-          if (err.response?.status !== 401 && err.response?.status !== 400 && err.response?.status !== 404) {
-            throw err;
+          if (trainerRes.success && trainerRes.accessToken) {
+            accessToken = trainerRes.accessToken;
+            refreshToken = trainerRes.refreshToken ?? null;
+          } else {
+            recordFailure(trainerRes.message);
           }
+        } catch (err: any) {
+          const status: number | undefined = err?.response?.status;
+          if (status === undefined || status >= 500) throw err;
+          recordFailure(err?.response?.data?.message);
         }
       }
 
       // Try Admin Login
-      if (!token) {
+      if (!accessToken) {
         try {
           const adminRes = await authApi.adminLogin(data);
-          token = adminRes.token;
-        } catch (err: any) {
-          if (err.response?.status !== 401 && err.response?.status !== 400 && err.response?.status !== 404) {
-            throw err;
+          if (adminRes.success && adminRes.accessToken) {
+            accessToken = adminRes.accessToken;
+            refreshToken = adminRes.refreshToken ?? null;
+          } else {
+            recordFailure(adminRes.message);
           }
+        } catch (err: any) {
+          const status: number | undefined = err?.response?.status;
+          if (status === undefined || status >= 500) throw err;
+          recordFailure(err?.response?.data?.message);
         }
       }
 
-      if (token) {
-        login(token);
-        const decoded = decodeToken(token);
+      if (accessToken) {
+        login(accessToken, refreshToken);
+        const decoded = decodeToken(accessToken);
         const from = (location.state as any)?.from?.pathname;
 
         if (from && from !== '/') {
@@ -84,10 +124,16 @@ export const LoginPage: React.FC = () => {
           else navigate('/', { replace: true });
         }
       } else {
-        setServerError('Invalid username or password.');
+        // Prefer a meaningful backend explanation captured from any role
+        // attempt (e.g. "GymOwner account is inactive"), then the last
+        // backend message, then the generic credentials text.
+        setServerError(inactiveMessage || lastMessage || 'Invalid username or password.');
       }
-    } catch (error: any) {
-      setServerError('An unexpected error occurred. Please try again.');
+    } catch (error) {
+      // Network failure or server error — safe, generic message only.
+      setServerError(
+        getApiErrorMessage(error, 'Unable to sign in right now. Please check your connection and try again.'),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -100,44 +146,34 @@ export const LoginPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'var(--sp-6)',
-        backgroundColor: 'var(--color-bg-base)',
+        padding: '32px 24px',
+        backgroundColor: 'var(--gm-bg)',
         minHeight: 'calc(100vh - 130px)',
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '400px',
-          backgroundColor: 'var(--color-bg-surface)',
-          borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--color-border)',
-          boxShadow: 'var(--shadow-md)',
-          padding: 'var(--sp-8)',
-          animation: 'slide-up var(--duration-slow) var(--ease)',
+          maxWidth: '440px',
+          backgroundColor: 'var(--gm-surface)',
+          borderRadius: 'var(--gm-radius-xl)',
+          border: '1px solid var(--gm-border)',
+          boxShadow: 'var(--gm-shadow-md)',
+          padding: '36px 32px',
+          animation: 'slide-up var(--gm-transition-normal)',
         }}
       >
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: 'var(--color-primary-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-            }}
-          >
-            <Dumbbell size={22} style={{ color: 'var(--color-primary-600)' }} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+            <BrandLogo size={48} />
           </div>
           <h1
             style={{
-              fontSize: 'var(--font-size-xl)',
-              fontWeight: 600,
-              color: 'var(--color-text-main)',
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: 'var(--gm-text-primary)',
+              letterSpacing: '-0.025em',
               margin: 0,
             }}
           >
@@ -145,9 +181,9 @@ export const LoginPage: React.FC = () => {
           </h1>
           <p
             style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-text-muted)',
-              marginTop: '4px',
+              fontSize: 'var(--gm-font-size-sm)',
+              color: 'var(--gm-text-secondary)',
+              marginTop: '6px',
             }}
           >
             Sign in to your GymMaster account
@@ -160,23 +196,23 @@ export const LoginPage: React.FC = () => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '10px 12px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-danger-50)',
-              border: '1px solid var(--color-danger-200)',
+              gap: '10px',
+              padding: '12px 14px',
+              borderRadius: 'var(--gm-radius-md)',
+              backgroundColor: 'var(--gm-danger-soft)',
+              border: '1px solid var(--gm-danger-border)',
               marginBottom: '20px',
             }}
           >
-            <AlertCircle size={16} style={{ color: 'var(--color-danger-600)', flexShrink: 0 }} />
-            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-danger-700)', margin: 0 }}>
+            <AlertCircle size={18} strokeWidth={2} style={{ color: 'var(--gm-danger)', flexShrink: 0 }} />
+            <p style={{ fontSize: 'var(--gm-font-size-sm)', fontWeight: 500, color: 'var(--gm-danger)', margin: 0, lineHeight: 1.4 }}>
               {serverError}
             </p>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <Input
             label="Username"
             {...register('userName')}
@@ -192,7 +228,7 @@ export const LoginPage: React.FC = () => {
             autoComplete="current-password"
             placeholder="••••••••"
           />
-          <Button type="submit" isLoading={isLoading} style={{ width: '100%', marginTop: '4px' }}>
+          <Button type="submit" size="lg" isLoading={isLoading} style={{ width: '100%', marginTop: '6px' }}>
             Sign In
           </Button>
         </form>
@@ -200,19 +236,20 @@ export const LoginPage: React.FC = () => {
         {/* Footer */}
         <div
           style={{
-            marginTop: '24px',
+            marginTop: '28px',
             paddingTop: '20px',
-            borderTop: '1px solid var(--color-border)',
+            borderTop: '1px solid var(--gm-border)',
             textAlign: 'center',
           }}
         >
-          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
+          <p style={{ fontSize: 'var(--gm-font-size-sm)', color: 'var(--gm-text-secondary)', margin: 0 }}>
             Don't have an account?{' '}
             <Link
               to="/apply"
               style={{
-                color: 'var(--color-primary-600)',
-                fontWeight: 500,
+                color: 'var(--gm-primary)',
+                fontWeight: 600,
+                textDecoration: 'none',
               }}
             >
               Apply to become a Gym Owner

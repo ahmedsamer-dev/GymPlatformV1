@@ -16,7 +16,7 @@ import { ErrorState } from '../../components/ui/ErrorState';
 import { Modal } from '../../components/ui/Modal';
 import { Select } from '../../components/ui/Select';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from '../../components/ui/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { normalizeSubscriptionStatus, type Member, type Subscription } from '../../types/shared';
 

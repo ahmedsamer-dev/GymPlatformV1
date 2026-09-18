@@ -38,6 +38,13 @@ namespace Gym_Management_System.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
+            builder.Property(g => g.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            builder.HasIndex(g => g.IsActive)
+                .HasDatabaseName("IX_Gym_IsActive");
+
             // ============================================
             // FOREIGN KEY CONFIGURATION
             // ============================================

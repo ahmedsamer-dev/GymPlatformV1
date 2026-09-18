@@ -41,25 +41,39 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             };
         }
 
-        public async Task<AuthTokenResult?> RotateAsync(string rawRefreshToken)
+        public async Task<AuthRotationResult> RotateAsync(string rawRefreshToken)
         {
             if (string.IsNullOrWhiteSpace(rawRefreshToken))
-                return null;
+                return AuthRotationResult.Failure();
 
             var tokenHash = HashToken(rawRefreshToken);
             var storedToken = await _dbContext.RefreshTokens
                 .Include(t => t.User).ThenInclude(u => u.Admin)
                 .Include(t => t.User).ThenInclude(u => u.GymOwner)
-                .Include(t => t.User).ThenInclude(u => u.Trainer)
+                .Include(t => t.User).ThenInclude(u => u.Trainer!)
+                    .ThenInclude(t => t.Gym!)
+                        .ThenInclude(g => g.GymOwner!)
                 .SingleOrDefaultAsync(t => t.TokenHash == tokenHash);
 
             if (storedToken == null || !storedToken.IsActive || !storedToken.User.IsActive)
-                return null;
+                return AuthRotationResult.Failure();
 
             var user = storedToken.User;
             var profile = GetProfile(user);
             if (profile == null || !profile.IsActive)
-                return null;
+                return AuthRotationResult.Failure();
+
+            if (user.Role == "Trainer" && user.Trainer != null)
+            {
+                if (user.Trainer.Gym == null || !user.Trainer.Gym.IsActive)
+                    return AuthRotationResult.Failure("Your gym is inactive.");
+
+                if (user.Trainer.Gym.GymOwner == null || !user.Trainer.Gym.GymOwner.IsActive)
+                    return AuthRotationResult.Failure("Your gym owner's account is inactive.");
+            }
+
+            if (user.Role == "GymOwner" && user.GymOwner != null && user.GymOwner.User is { IsActive: false })
+                return AuthRotationResult.Failure();
 
             storedToken.RevokedOn = DateTime.UtcNow;
             var rawNewToken = GenerateRawToken();
@@ -73,7 +87,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             await _dbContext.SaveChangesAsync();
 
             var accessToken = _tokenService.GenerateAccessToken(user, profile.DomainId, profile.FullName, profile.Email, profile.GymId);
-            return new AuthTokenResult { AccessToken = accessToken, RefreshToken = rawNewToken };
+            return AuthRotationResult.Success(new AuthTokenResult { AccessToken = accessToken, RefreshToken = rawNewToken });
         }
 
         public async Task<bool> RevokeAsync(string rawRefreshToken)
@@ -95,7 +109,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
         private static ProfileInfo? GetProfile(User user) => user.Role switch
         {
             "Admin" when user.Admin != null => new(user.Admin.Id, user.Admin.FullName, user.Admin.Email, null, user.Admin.IsActive),
-            "GymOwner" when user.GymOwner != null => new(user.GymOwner.Id, user.GymOwner.FullName, user.GymOwner.Email, null, user.GymOwner.IsActive),
+            "GymOwner" when user.GymOwner != null => new(user.GymOwner.Id, user.GymOwner.FullName, user.GymOwner.Email, null, user.GymOwner.IsActive && (user.GymOwner.User == null || user.GymOwner.User.IsActive)),
             "Trainer" when user.Trainer != null => new(user.Trainer.Id, user.Trainer.FullName, null, user.Trainer.GymId, user.Trainer.IsActive),
             _ => null
         };

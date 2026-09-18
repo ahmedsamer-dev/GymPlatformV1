@@ -4,6 +4,8 @@ using Gym_Management_System.Entities;
 using Microsoft.EntityFrameworkCore;
 using Mapster;
 using Gym_Platform_V1.data.DTOs.GymOwner;
+using Gym_Platform_V1.data.DTOs.Admin.Common;
+using Gym_Platform_V1.data.DTOs.Admin.Owners;
 
 namespace Gym_Platform_V1.Abstractions.Implemention.Services
 {
@@ -29,6 +31,112 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        public async Task<PagedResponseDto<OwnerListResponseDto>> GetPagedForAdminAsync(OwnerListRequestDto request)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            var query = _dbContext.GymOwners
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (request.IsActive.HasValue)
+                query = query.Where(o => o.IsActive == request.IsActive.Value);
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+                query = query.Where(o => o.FullName!.Contains(search)
+                    || o.UserName!.Contains(search)
+                    || o.Email!.Contains(search)
+                    || o.PhoneNumber!.Contains(search));
+            }
+
+            var descending = !string.Equals(request.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+            query = request.SortBy?.ToLowerInvariant() switch
+            {
+                "fullname" => descending ? query.OrderByDescending(o => o.FullName) : query.OrderBy(o => o.FullName),
+                "username" => descending ? query.OrderByDescending(o => o.UserName) : query.OrderBy(o => o.UserName),
+                "email" => descending ? query.OrderByDescending(o => o.Email) : query.OrderBy(o => o.Email),
+                "gymcount" => descending ? query.OrderByDescending(o => o.Gyms.Count) : query.OrderBy(o => o.Gyms.Count),
+                _ => descending ? query.OrderByDescending(o => o.CreatedAt) : query.OrderBy(o => o.CreatedAt)
+            };
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+            var items = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(o => new OwnerListResponseDto
+                {
+                    Id = o.Id,
+                    FullName = o.FullName ?? string.Empty,
+                    UserName = o.UserName ?? string.Empty,
+                    Email = o.Email ?? string.Empty,
+                    PhoneNumber = o.PhoneNumber ?? string.Empty,
+                    IsActive = o.IsActive,
+                    CreatedAt = o.CreatedAt,
+                    GymCount = o.Gyms.Count
+                })
+                .ToListAsync();
+
+            return new PagedResponseDto<OwnerListResponseDto>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<OwnerDetailsResponseDto?> GetDetailsForAdminAsync(int id)
+        {
+            if (id <= 0)
+                return null;
+
+            return await _dbContext.GymOwners
+                .AsNoTracking()
+                .Where(o => o.Id == id)
+                .Select(o => new OwnerDetailsResponseDto
+                {
+                    Id = o.Id,
+                    FullName = o.FullName ?? string.Empty,
+                    UserName = o.UserName ?? string.Empty,
+                    Email = o.Email ?? string.Empty,
+                    PhoneNumber = o.PhoneNumber ?? string.Empty,
+                    IsActive = o.IsActive,
+                    CreatedAt = o.CreatedAt,
+                    GymCount = o.Gyms.Count,
+                    ActiveGymCount = o.Gyms.Count(g => g.IsActive),
+                    TrainerCount = o.Gyms.SelectMany(g => g.Trainers).Count(),
+                    MemberCount = o.Gyms.SelectMany(g => g.Members).Count()
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task SetOwnerStatusAsync(int ownerId, bool active)
+        {
+            if (ownerId <= 0)
+                throw new ArgumentException("Owner ID must be greater than 0", nameof(ownerId));
+
+            var owner = await _dbContext.GymOwners
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.Id == ownerId);
+
+            if (owner is null)
+                throw new KeyNotFoundException($"GymOwner with id {ownerId} not found.");
+
+            if (owner.IsActive == active)
+                throw new InvalidOperationException($"GymOwner is already {(active ? "active" : "inactive")}.");
+
+            owner.IsActive = active;
+            if (owner.User is not null)
+                owner.User.IsActive = active;
+
+            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation("GymOwner status changed. OwnerId: {OwnerId}, Active: {Active}", ownerId, active);
+        }
+
         /// <summary>
         /// Returns the Gyms belonging to the authenticated GymOwner.
         ///
@@ -44,7 +152,7 @@ namespace Gym_Platform_V1.Abstractions.Implemention.Services
 
             var gyms = await _dbContext.Gyms
                 .AsNoTracking()
-                .Where(g => g.GymOwnerID == ownerId)
+                .Where(g => g.GymOwnerID == ownerId && g.IsActive && g.GymOwner!.IsActive)
                 .ProjectToType<GymSummaryDto>()
                 .ToListAsync();
 

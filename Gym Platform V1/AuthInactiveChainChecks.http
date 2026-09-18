@@ -1,0 +1,145 @@
+@host = http://localhost:5077
+@ownerUserName = replace-with-owner-username
+@ownerPassword = replace-with-owner-password
+@trainerUserName = replace-with-trainer-username
+@trainerPassword = replace-with-trainer-password
+@trainerId = 0
+@gymId = 0
+@ownerId = 0
+@adminAccessToken = replace-with-admin-access-token
+@trainerRefreshToken = replace-with-refresh-token
+
+# 1. Active Trainer -> login succeeds (200, tokens issued).
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 2. Trainer's Gym inactive -> login returns 401 with "Your gym is inactive."
+# Setup: deactivate gym {{gymId}} as Admin first.
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 3. Reactivate Gym -> Trainer login succeeds again.
+PATCH {{host}}/api/admin/gyms/{{gymId}}/activate
+Authorization: Bearer {{adminAccessToken}}
+
+###
+
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 4. GymOwner inactive -> Trainer login returns 401 with "Your gym owner's account is inactive."
+# Setup: deactivate owner {{ownerId}} as Admin first.
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 5. Reactivate Owner -> Trainer login succeeds again.
+PATCH {{host}}/api/admin/owners/{{ownerId}}/activate
+Authorization: Bearer {{adminAccessToken}}
+
+###
+
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 6. Trainer/User inactive -> login returns 401 with the existing inactive Trainer message.
+# Setup: deactivate trainer {{trainerId}} as its Owner first.
+POST {{host}}/api/auth/trainer/login
+Content-Type: application/json
+
+{
+  "userName": "{{trainerUserName}}",
+  "password": "{{trainerPassword}}"
+}
+
+###
+
+# 7. Existing Trainer refresh token + Gym becomes inactive -> refresh rejected (401).
+# Setup: obtain {{trainerRefreshToken}} while active, then deactivate gym {{gymId}}.
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{trainerRefreshToken}}"
+}
+
+###
+
+# 8. Existing Trainer refresh token + Owner becomes inactive -> refresh rejected (401).
+# Setup: use a fresh active refresh token, then deactivate owner {{ownerId}}.
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{trainerRefreshToken}}"
+}
+
+###
+
+# 9. Inactive Owner -> Owner login rejected (401).
+# Setup: deactivate owner {{ownerId}} as Admin first.
+POST {{host}}/api/auth/owner/login
+Content-Type: application/json
+
+{
+  "userName": "{{ownerUserName}}",
+  "password": "{{ownerPassword}}"
+}
+
+###
+
+# 10. Active Owner + inactive Gym -> Owner login still succeeds.
+# Setup: reactivate owner {{ownerId}}, keep gym {{gymId}} inactive.
+POST {{host}}/api/auth/owner/login
+Content-Type: application/json
+
+{
+  "userName": "{{ownerUserName}}",
+  "password": "{{ownerPassword}}"
+}
+
+###
+
+# 11. Owner gym list must not expose the inactive Gym.
+GET {{host}}/api/owner/gyms
+Authorization: Bearer replace-with-owner-access-token
+
+###
+
+# Owner trainer list must not expose trainers under the inactive Gym.
+GET {{host}}/api/owner/trainers?gymId={{gymId}}
+Authorization: Bearer replace-with-owner-access-token

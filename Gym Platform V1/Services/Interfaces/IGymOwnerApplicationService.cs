@@ -1,4 +1,6 @@
 ﻿using Gym_Platform_V1.data.DTOs.GymOwnerApplication;
+using Gym_Platform_V1.data.DTOs.Admin.Applications;
+using Gym_Platform_V1.data.DTOs.Admin.Common;
 
 namespace Gym_Platform_V1.Abstractions.Interfaces
 {
@@ -15,5 +17,9 @@ namespace Gym_Platform_V1.Abstractions.Interfaces
             int applicationId,
             string rejectionReason);
         Task<IEnumerable<GymOwnerApplicationResponseDto>> GetPendingApplicationsAsync();
+
+        Task<PagedResponseDto<ApplicationListResponseDto>> GetPagedApplicationsAsync(ApplicationListRequestDto request);
+
+        Task<GymOwnerApplicationResponseDto?> GetByIdForAdminAsync(int applicationId);
     }
 }

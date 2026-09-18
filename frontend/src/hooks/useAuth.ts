@@ -1,41 +1,51 @@
 import { useState, useEffect } from 'react';
 import type { Role } from '../types/auth';
-import { getUserRole } from '../utils/token';
+import { getUserRole, getRefreshToken, setTokens, clearTokens } from '../utils/token';
+import { authApi } from '../api/auth.api';
 
 export const useAuth = () => {
   const [role, setRole] = useState<Role | null>(getUserRole());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!role);
 
   useEffect(() => {
-    const handleStorageChange = () => {
+    const handleAuthChange = () => {
       const currentRole = getUserRole();
       setRole(currentRole);
       setIsAuthenticated(!!currentRole);
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('unauthorized', handleStorageChange);
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('unauthorized', handleAuthChange);
 
     // Initial check
-    handleStorageChange();
+    handleAuthChange();
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('unauthorized', handleStorageChange);
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('unauthorized', handleAuthChange);
     };
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem('gym_token', token);
+  const login = (accessToken: string, refreshToken?: string | null) => {
+    setTokens(accessToken, refreshToken);
     const currentRole = getUserRole();
     setRole(currentRole);
-    setIsAuthenticated(true);
+    setIsAuthenticated(!!currentRole);
     // Trigger storage event for other tabs (optional but good practice)
     window.dispatchEvent(new Event('storage'));
   };
 
   const logout = () => {
-    localStorage.removeItem('gym_token');
+    // Best-effort server-side revoke of the refresh token. The endpoint is
+    // token-based (no JWT required), so this also works with an expired
+    // access token; failures (network/401) are deliberately ignored — the
+    // local session ends regardless.
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      authApi.revoke(refreshToken).catch(() => {});
+    }
+
+    clearTokens();
     setRole(null);
     setIsAuthenticated(false);
     window.dispatchEvent(new Event('storage'));
